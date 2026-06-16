@@ -5,6 +5,9 @@ import { authMode } from "@/lib/auth";
 import { getSessionUser } from "@/lib/session";
 import { getLevelInfo } from "@/lib/levels";
 
+// All app pages read per-user data at request time — never statically prerender.
+export const dynamic = "force-dynamic";
+
 // All authenticated app pages share this shell. Data flows top-down from the
 // synced user; if the DB is unreachable we render a setup notice instead of
 // crashing.

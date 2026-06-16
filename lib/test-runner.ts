@@ -34,7 +34,6 @@ function buildSolution(
     error: (...args: unknown[]) => logs.push(`✖ ${args.map(stringify).join(" ")}`),
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-implied-eval
   const factory = new Function(
     "console",
     "module",

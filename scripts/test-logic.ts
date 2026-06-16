@@ -118,6 +118,57 @@ async function main() {
     assert.ok(out.error);
   });
 
+  console.log("Seed content");
+  const { FLASHCARDS } = await import("@/scripts/seed-data/flashcards");
+  const { QUIZ_QUESTIONS } = await import("@/scripts/seed-data/quiz");
+  const { CHALLENGES } = await import("@/scripts/seed-data/challenges");
+  const { TOPICS } = await import("@/lib/content-config");
+
+  await test("content meets minimum counts", () => {
+    assert.ok(FLASHCARDS.length >= 60, `flashcards: ${FLASHCARDS.length}`);
+    assert.ok(QUIZ_QUESTIONS.length >= 40, `quiz: ${QUIZ_QUESTIONS.length}`);
+    assert.ok(CHALLENGES.length >= 20, `challenges: ${CHALLENGES.length}`);
+  });
+
+  await test("all seed slugs reference real topics", () => {
+    const slugs = new Set(TOPICS.map((t) => t.slug));
+    for (const f of FLASHCARDS) assert.ok(slugs.has(f.topicSlug), `flashcard ${f.slug}`);
+    for (const q of QUIZ_QUESTIONS) assert.ok(slugs.has(q.topicSlug), `quiz ${q.slug}`);
+    for (const c of CHALLENGES) assert.ok(slugs.has(c.topicSlug), `challenge ${c.slug}`);
+  });
+
+  await test("slugs are unique within each set", () => {
+    const uniq = (arr: { slug: string }[]) => new Set(arr.map((x) => x.slug)).size === arr.length;
+    assert.ok(uniq(FLASHCARDS), "flashcard slugs not unique");
+    assert.ok(uniq(QUIZ_QUESTIONS), "quiz slugs not unique");
+    assert.ok(uniq(CHALLENGES), "challenge slugs not unique");
+  });
+
+  await test("quiz correctIndex is in range and options are 4-tuples", () => {
+    for (const q of QUIZ_QUESTIONS) {
+      assert.equal(q.options.length, 4, `quiz ${q.slug} options`);
+      assert.ok(q.correctIndex >= 0 && q.correctIndex <= 3, `quiz ${q.slug} index`);
+    }
+  });
+
+  await test("every JS challenge solution passes its own test cases", async () => {
+    const failures: string[] = [];
+    for (const c of CHALLENGES) {
+      if (c.type !== "js") continue;
+      const out = await runJsChallenge(c.solutionCode, c.fnName, c.testCases);
+      if (!out.passed) failures.push(c.slug);
+    }
+    assert.equal(failures.length, 0, `failing JS solutions: ${failures.join(", ")}`);
+  });
+
+  await test("react challenges have a checklist and no JS test cases", () => {
+    for (const c of CHALLENGES) {
+      if (c.type !== "react") continue;
+      assert.ok((c.reactChecklist?.length ?? 0) > 0, `react ${c.slug} checklist`);
+      assert.equal(c.testCases.length, 0, `react ${c.slug} testCases`);
+    }
+  });
+
   console.log(`\n${passed} checks passed.`);
 }
 
