@@ -1,0 +1,83 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* DevPath palette — warm off-white, near-black, burnt orange accent. */
+    --background: #fdfbfa;
+    --surface: #ffffff;
+    --border: #e8e4e0;
+    --text-primary: #0f0f0f;
+    --text-secondary: #6b6561;
+    --accent: #e8512a;
+    --accent-hover: #cf4420;
+    --success: #16a34a;
+    --error: #dc2626;
+    --code-bg: #1a1a1a;
+  }
+
+  * {
+    border-color: var(--border);
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--text-primary);
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  ::selection {
+    background-color: rgb(232 81 42 / 0.18);
+  }
+
+  /* Focus ring — accent, accessible, never removed without replacement. */
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+}
+
+@layer components {
+  .heading-1 {
+    @apply text-4xl font-extrabold tracking-tight md:text-5xl;
+  }
+  .heading-2 {
+    @apply text-2xl font-bold tracking-tight md:text-3xl;
+  }
+  .heading-3 {
+    @apply text-lg font-bold tracking-tight;
+  }
+  .text-muted {
+    color: var(--text-secondary);
+  }
+  .card-surface {
+    @apply rounded-xl border bg-surface shadow-card;
+  }
+}
+
+@layer utilities {
+  /* Hide scrollbar for horizontal concept strips while keeping scroll. */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .animate-in {
+    animation: fade-in 0.3s ease-out;
+  }
+}
+
+/* Monaco / Sandpack containers should never overflow the split pane. */
+.monaco-editor,
+.sp-wrapper {
+  border-radius: 0.5rem;
+}
