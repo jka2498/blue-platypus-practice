@@ -243,6 +243,18 @@ export async function getChallengeDetail(
   };
 }
 
+/** A random JS challenge (easy/medium) for the interview simulation coding round. */
+export async function getRandomJsChallenge(): Promise<Challenge | null> {
+  const { data } = await getSupabaseAdmin()
+    .from("challenges")
+    .select("*")
+    .eq("type", "js")
+    .in("difficulty", ["easy", "medium"]);
+  const list = (data ?? []) as Challenge[];
+  if (list.length === 0) return null;
+  return list[Math.floor(Math.random() * list.length)] ?? null;
+}
+
 // ── Dashboard ─────────────────────────────────────────────────────────────────
 
 export interface DashboardData {

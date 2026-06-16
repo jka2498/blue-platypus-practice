@@ -1,9 +1,33 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import type { Challenge, QuizQuestion } from "@/types";
 import { requireUser } from "@/lib/auth";
 import { getSupabaseAdmin } from "@/lib/supabase";
+import { getQuizQuestions, getRandomJsChallenge } from "@/lib/queries";
 import { awardXp, quizXp } from "@/lib/xp";
+
+/** Fetch a fresh, shuffled quiz session (re-shuffles on each retake). */
+export async function fetchQuizSession(
+  topicId: string | null,
+  count = 10,
+): Promise<QuizQuestion[]> {
+  await requireUser();
+  return getQuizQuestions(topicId, count);
+}
+
+/** Interview simulation: 5 mixed conceptual MCQs + 1 JS coding challenge. */
+export async function fetchInterviewSession(): Promise<{
+  questions: QuizQuestion[];
+  challenge: Challenge | null;
+}> {
+  await requireUser();
+  const [questions, challenge] = await Promise.all([
+    getQuizQuestions(null, 5),
+    getRandomJsChallenge(),
+  ]);
+  return { questions, challenge };
+}
 
 export interface SubmitQuizInput {
   topicId: string | null;
