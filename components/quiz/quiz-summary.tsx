@@ -3,6 +3,7 @@
 import { Trophy, RefreshCw, Sparkles, AlertCircle } from "lucide-react";
 import type { QuizQuestion } from "@/types";
 import { Button } from "@/components/ui/button";
+import { Markdown } from "@/components/markdown";
 import { cn } from "@/lib/utils";
 
 interface QuizSummaryProps {
@@ -67,7 +68,9 @@ export function QuizSummary({
           <ul className="space-y-3">
             {wrong.map(({ q, i }) => (
               <li key={q.id} className="rounded-xl border bg-surface p-4 shadow-card">
-                <div className="font-semibold">{q.question}</div>
+                <Markdown className="[&_p:first-child]:mt-0 [&_p]:font-semibold">
+                  {q.question}
+                </Markdown>
                 <div className="mt-2 grid gap-1 text-sm">
                   <div className="flex gap-2">
                     <span className="text-muted-foreground">Your answer:</span>
@@ -85,7 +88,9 @@ export function QuizSummary({
                   </div>
                 </div>
                 {q.explanation ? (
-                  <p className="mt-2 text-sm text-muted-foreground">{q.explanation}</p>
+                  <Markdown className="mt-2 [&_p]:text-sm [&_p]:text-muted-foreground">
+                    {q.explanation}
+                  </Markdown>
                 ) : null}
               </li>
             ))}

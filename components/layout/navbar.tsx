@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { Flame, Layers, Menu, X, Zap } from "lucide-react";
 import { NAV_ITEMS } from "@/lib/nav";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { cn } from "@/lib/utils";
 
 interface NavbarProps {
@@ -46,7 +47,7 @@ export function Navbar({ displayName, xp, streak, levelName, authMode }: NavbarP
                   "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
                   isActive(item.href)
                     ? "bg-accent/10 text-accent"
-                    : "text-muted-foreground hover:bg-[#F1ECE8] hover:text-foreground",
+                    : "text-muted-foreground hover:bg-muted-hover hover:text-foreground",
                 )}
               >
                 <item.icon className="h-4 w-4" />
@@ -79,6 +80,8 @@ export function Navbar({ displayName, xp, streak, levelName, authMode }: NavbarP
             <div className="text-xs text-muted-foreground">{levelName}</div>
           </div>
 
+          <ThemeToggle />
+
           {authMode === "auth0" ? (
             <a
               href="/api/auth/logout"
@@ -90,7 +93,7 @@ export function Navbar({ displayName, xp, streak, levelName, authMode }: NavbarP
 
           <button
             type="button"
-            className="rounded-lg p-2 text-muted-foreground hover:bg-[#F1ECE8] lg:hidden"
+            className="rounded-lg p-2 text-muted-foreground hover:bg-muted-hover lg:hidden"
             aria-label={open ? "Close menu" : "Open menu"}
             aria-expanded={open}
             onClick={() => setOpen((v) => !v)}
@@ -113,7 +116,7 @@ export function Navbar({ displayName, xp, streak, levelName, authMode }: NavbarP
                   "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium",
                   isActive(item.href)
                     ? "bg-accent/10 text-accent"
-                    : "text-muted-foreground hover:bg-[#F1ECE8]",
+                    : "text-muted-foreground hover:bg-muted-hover",
                 )}
               >
                 <item.icon className="h-4 w-4" />

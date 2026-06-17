@@ -37,7 +37,7 @@ export function MasteryBars({ mastery }: { mastery: TopicMastery[] }) {
                 <span className="text-sm font-semibold">{m.topicName}</span>
                 <span className="text-sm font-bold tabular-nums">{m.overall}%</span>
               </div>
-              <div className="h-2 overflow-hidden rounded-full bg-[#EEE9E5]">
+              <div className="h-2 overflow-hidden rounded-full bg-border">
                 <div
                   className={cn("h-full rounded-full transition-all", barTone(m.overall))}
                   style={{ width: `${m.overall}%` }}

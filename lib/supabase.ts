@@ -34,6 +34,13 @@ export function getSupabaseAdmin(): SupabaseClient {
   }
   _admin = createClient(SUPABASE_URL, serviceKey, {
     auth: { autoRefreshToken: false, persistSession: false },
+    // Next.js 14 caches `fetch` GETs by default in Server Components, which
+    // makes supabase REST reads return stale data after writes (e.g. a SELECT
+    // that returned "no row" stays cached even after an INSERT created the
+    // row). Force every request through fresh.
+    global: {
+      fetch: (input, init) => fetch(input, { ...init, cache: "no-store" }),
+    },
   });
   return _admin;
 }

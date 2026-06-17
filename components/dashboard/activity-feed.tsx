@@ -44,7 +44,7 @@ export function ActivityFeed({ items }: { items: ActivityFeedItem[] }) {
               : "text-error";
         return (
           <li key={item.id} className="flex items-center gap-3 p-4">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#F1ECE8] text-muted-foreground">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted-hover text-muted-foreground">
               <Icon className="h-4 w-4" />
             </span>
             <div className="min-w-0 flex-1">

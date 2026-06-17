@@ -200,7 +200,7 @@ export function InterviewRunner({ questions, challenge, onExit }: InterviewRunne
         <span
           className={cn(
             "flex items-center gap-1.5 rounded-lg px-2.5 py-1 font-mono text-sm font-bold",
-            urgent ? "bg-error/10 text-error" : "bg-[#F1ECE8] text-foreground",
+            urgent ? "bg-error/10 text-error" : "bg-muted-hover text-foreground",
           )}
         >
           <Clock className="h-4 w-4" /> {fmt(timeLeft)}

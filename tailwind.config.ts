@@ -27,6 +27,7 @@ const config: Config = {
         muted: {
           DEFAULT: "var(--background)",
           foreground: "var(--text-secondary)",
+          hover: "var(--muted-hover)",
         },
         accent: {
           DEFAULT: "var(--accent)",
@@ -46,6 +47,9 @@ const config: Config = {
         medium: "#D97706",
         hard: "#DC2626",
         "code-bg": "var(--code-bg)",
+        "code-inline-bg": "var(--code-inline-bg)",
+        "code-inline-fg": "var(--code-inline-fg)",
+        "code-block-fg": "var(--code-block-fg)",
       },
       fontFamily: {
         sans: ["var(--font-inter)", "ui-sans-serif", "system-ui", "sans-serif"],

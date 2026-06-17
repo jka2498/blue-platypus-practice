@@ -85,7 +85,7 @@ export function QuizApp({ topics }: { topics: QuizTopicOption[] }) {
 
         <div className="flex flex-col justify-between rounded-2xl border bg-surface p-6 shadow-card">
           <div>
-            <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#F1ECE8] text-foreground">
+            <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted-hover text-foreground">
               <Shuffle className="h-5 w-5" />
             </span>
             <h2 className="heading-3 mt-3">Quick mixed quiz</h2>

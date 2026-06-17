@@ -40,7 +40,7 @@ export function TopicList({
         aria-current={active ? "true" : undefined}
         className={cn(
           "flex w-full flex-col gap-1 rounded-lg px-3 py-2 text-left text-sm transition-colors",
-          active ? "bg-accent/10 text-accent" : "hover:bg-[#F1ECE8]",
+          active ? "bg-accent/10 text-accent" : "hover:bg-muted-hover",
         )}
       >
         <span className="flex items-center justify-between gap-2">

@@ -275,7 +275,7 @@ function CompleteState({
 
 function Kbd({ children }: { children: React.ReactNode }) {
   return (
-    <kbd className="rounded border bg-[#F1ECE8] px-1.5 py-0.5 font-mono text-[10px] font-semibold text-foreground">
+    <kbd className="rounded border bg-muted-hover px-1.5 py-0.5 font-mono text-[10px] font-semibold text-foreground">
       {children}
     </kbd>
   );

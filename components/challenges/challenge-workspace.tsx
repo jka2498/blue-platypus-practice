@@ -272,7 +272,7 @@ export function ChallengeWorkspace({ detail }: { detail: ChallengeDetail }) {
                     type="button"
                     onClick={() => setDrawerOpen(false)}
                     aria-label="Close results"
-                    className="rounded-md p-1 text-muted-foreground hover:bg-[#F1ECE8]"
+                    className="rounded-md p-1 text-muted-foreground hover:bg-muted-hover"
                   >
                     <X className="h-4 w-4" />
                   </button>

@@ -15,6 +15,28 @@
     --success: #16a34a;
     --error: #dc2626;
     --code-bg: #1a1a1a;
+    /* Surfaces that used to be hard-coded hex values across components. */
+    --muted-hover: #f1ece8;
+    --code-inline-bg: #f1ece8;
+    --code-inline-fg: #0f0f0f;
+    --code-block-fg: #e8e4e0;
+  }
+
+  .dark {
+    --background: #0f0f0e;
+    --surface: #1a1a18;
+    --border: #2a2a27;
+    --text-primary: #f5f2ef;
+    --text-secondary: #a8a199;
+    --accent: #f06a44;
+    --accent-hover: #ff7e58;
+    --success: #4ade80;
+    --error: #f87171;
+    --code-bg: #0a0a09;
+    --muted-hover: #232320;
+    --code-inline-bg: #2a2a27;
+    --code-inline-fg: #f5f2ef;
+    --code-block-fg: #e8e4e0;
   }
 
   * {
@@ -30,6 +52,10 @@
     background-color: var(--background);
     color: var(--text-primary);
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    /* Safety net: any future component that bleeds past the viewport
+       (e.g. a wide table or a -mx- punch-through) must not create a
+       page-level horizontal scrollbar. */
+    overflow-x: hidden;
   }
 
   ::selection {

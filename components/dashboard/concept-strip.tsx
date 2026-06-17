@@ -35,11 +35,11 @@ export function ConceptStrip() {
           Full guide <ArrowRight className="h-3.5 w-3.5" />
         </Link>
       </div>
-      <div className="no-scrollbar -mx-1 flex gap-3 overflow-x-auto px-1 pb-1">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
         {CONCEPTS.map((c) => (
           <div
             key={c.angular}
-            className="min-w-[210px] shrink-0 rounded-xl border bg-surface p-4 shadow-card"
+            className="rounded-xl border bg-surface p-4 shadow-card"
           >
             <div className="flex items-center gap-2 font-mono text-sm">
               <span className="text-muted-foreground">{c.angular}</span>

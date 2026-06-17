@@ -29,7 +29,9 @@ export function QuestionCard({
       <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
         Question {questionNumber} of {total}
       </div>
-      <h2 className="mt-2 text-xl font-bold tracking-tight">{question.question}</h2>
+      <Markdown className="mt-2 [&_p:first-child]:mt-0 [&_p]:text-xl [&_p]:font-bold [&_p]:tracking-tight">
+        {question.question}
+      </Markdown>
 
       <fieldset className="mt-6 space-y-3" aria-label="Answer options">
         {question.options.map((opt, i) => {
@@ -56,7 +58,7 @@ export function QuestionCard({
                 state === "idle" &&
                   (isSelected
                     ? "border-accent bg-accent/5"
-                    : "hover:border-[#dcd6d1] hover:bg-[#F6F2EF]"),
+                    : "hover:border-border hover:bg-muted-hover"),
                 state === "correct" && "border-success bg-success/10",
                 state === "wrong" && "border-error bg-error/10",
                 state === "muted" && "opacity-55",
@@ -86,7 +88,7 @@ export function QuestionCard({
       </fieldset>
 
       {revealed && question.explanation ? (
-        <div className="mt-5 rounded-xl border-l-2 border-accent bg-[#F6F2EF] p-4">
+        <div className="mt-5 rounded-xl border-l-2 border-accent bg-muted-hover p-4">
           <div className="mb-1 text-xs font-bold uppercase tracking-wide text-accent">
             {selected === question.correct_index ? "Correct" : "Explanation"}
           </div>

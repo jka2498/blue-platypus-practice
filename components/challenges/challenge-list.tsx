@@ -173,7 +173,7 @@ function FilterChip({
       onClick={onClick}
       className={cn(
         "rounded-full px-2.5 py-1 text-xs font-medium capitalize transition-colors",
-        active ? "bg-accent text-white" : "bg-[#F1ECE8] text-muted-foreground hover:bg-[#E7E1DC]",
+        active ? "bg-accent text-white" : "bg-muted-hover text-muted-foreground hover:bg-border",
       )}
     >
       {children}

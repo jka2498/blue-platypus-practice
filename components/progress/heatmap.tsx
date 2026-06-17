@@ -2,7 +2,7 @@ import type { HeatmapDay } from "@/types";
 import { cn } from "@/lib/utils";
 
 const LEVEL_CLASS: Record<HeatmapDay["level"], string> = {
-  0: "bg-[#EEE9E5]",
+  0: "bg-border",
   1: "bg-accent/25",
   2: "bg-accent/45",
   3: "bg-accent/70",
