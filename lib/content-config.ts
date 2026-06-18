@@ -35,6 +35,11 @@ export const TOPICS: TopicConfig[] = [
   { name: "Destructuring", slug: "destructuring", track: "javascript", order_index: 8, learningTrack: "js-fundamentals" },
   { name: "ES Modules", slug: "es-modules", track: "javascript", order_index: 9, learningTrack: "js-fundamentals" },
   { name: "Error Handling", slug: "error-handling", track: "javascript", order_index: 10, learningTrack: "js-fundamentals" },
+  { name: "Data Structures Basics", slug: "data-structures-basics", track: "javascript", order_index: 26, learningTrack: "js-fundamentals" },
+  { name: "Recursion Fundamentals", slug: "recursion-fundamentals", track: "javascript", order_index: 27, learningTrack: "js-fundamentals" },
+  { name: "String Algorithms", slug: "string-algorithms", track: "javascript", order_index: 28, learningTrack: "js-fundamentals" },
+  { name: "Object & Map Patterns", slug: "object-map-patterns", track: "javascript", order_index: 29, learningTrack: "js-fundamentals" },
+  { name: "Big-O Basics", slug: "big-o-basics", track: "javascript", order_index: 30, learningTrack: "js-fundamentals" },
 
   // React
   { name: "JSX", slug: "jsx", track: "react", order_index: 11, learningTrack: "react-core" },

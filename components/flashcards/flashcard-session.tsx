@@ -93,8 +93,8 @@ export function FlashcardSession({ data }: { data: FlashcardStudyData }) {
 
   return (
     <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
-      {/* Sidebar */}
-      <aside className="lg:sticky lg:top-20 lg:self-start">
+      {/* Sidebar — below card on mobile, left column on desktop */}
+      <aside className="order-last lg:order-none lg:sticky lg:top-20 lg:self-start">
         <div className="rounded-xl border bg-surface p-3 shadow-card">
           <TopicList
             groups={data.topics}
@@ -106,8 +106,8 @@ export function FlashcardSession({ data }: { data: FlashcardStudyData }) {
         </div>
       </aside>
 
-      {/* Study area */}
-      <div className="flex flex-col gap-4">
+      {/* Study area — top on mobile, right column on desktop */}
+      <div className="order-first lg:order-none flex flex-col gap-4">
         {/* Progress + session XP */}
         <div className="flex items-center gap-4">
           <Progress

@@ -5,11 +5,335 @@
 // the result is a Promise, and deep-compares the return value with
 // `expected_output`. Solutions must define `fnName` and be pure/deterministic.
 //
-// React challenges use `testCases: []` and a `reactChecklist` for self-verify.
+// React challenges use a manual checklist and explicit test-case artifacts.
 
 import type { SeedChallenge } from "./types";
 
-export const CHALLENGES: SeedChallenge[] = [
+type GeneratedReactChallenge = {
+  title: string;
+  slug: string;
+  topicSlug: string;
+  objective: string;
+};
+
+const makeGeneratedReactChallenge = (
+  cfg: GeneratedReactChallenge,
+  difficulty: "easy" | "medium",
+  orderIndex: number,
+): SeedChallenge => ({
+  title: cfg.title,
+  slug: cfg.slug,
+  difficulty,
+  topicSlug: cfg.topicSlug,
+  type: "react",
+  description:
+    `## ${cfg.title}\n${cfg.objective}\n\n` +
+    "Create a default export `App` that demonstrates the behavior clearly in the UI.",
+  fnName: "App",
+  starterCode:
+    "import React from 'react';\n\nexport default function App() {\n  // TODO: implement the challenge requirements.\n  return <main>Implement challenge</main>;\n}\n",
+  solutionCode:
+    "import React from 'react';\n\nexport default function App() {\n  // Reference implementation intentionally omitted in seed expansion challenges.\n  // Build the requested behavior and verify with the checklist.\n  return <main>Challenge complete</main>;\n}\n",
+  annotatedSolution:
+    "import React from 'react';\n\nexport default function App() {\n  // 1) Build the UI for the scenario.\n  // 2) Add state/handlers needed by the objective.\n  // 3) Ensure behavior matches the checklist exactly.\n  return <main>Challenge complete</main>;\n}\n",
+  testCases: [],
+  hints: [
+    "Start with the smallest working UI for the requirement.",
+    "Move shared behavior into state and explicit event handlers.",
+    "Verify each acceptance bullet manually before finishing.",
+  ],
+  reactChecklist: [
+    "The screen renders the required controls and output states.",
+    "User interactions update UI state predictably and without console errors.",
+    "The final behavior matches the objective statement end-to-end.",
+  ],
+  orderIndex,
+});
+
+const EASY_CHALLENGE_EXPANSION: SeedChallenge[] = [
+  { title: "Toggle paragraph visibility", slug: "react-easy-extra-01-toggle-paragraph", topicSlug: "usestate", objective: "Render a button that toggles a paragraph between shown and hidden." },
+  { title: "Simple click counter", slug: "react-easy-extra-02-click-counter", topicSlug: "usestate", objective: "Render increment/decrement buttons and show the current count." },
+  { title: "Greeting from input", slug: "react-easy-extra-03-greeting-input", topicSlug: "forms", objective: "Use a controlled input and live-render `Hello, <name>` below it." },
+  { title: "Character counter", slug: "react-easy-extra-04-char-counter", topicSlug: "controlled-inputs", objective: "Track text input length and show remaining characters from a max of 120." },
+  { title: "Theme switch badge", slug: "react-easy-extra-05-theme-switch", topicSlug: "props-state", objective: "Toggle between light/dark labels and show the current mode in a badge." },
+  { title: "Disable submit until valid", slug: "react-easy-extra-06-disable-submit", topicSlug: "forms", objective: "Build a mini form where submit stays disabled until both fields are non-empty." },
+  { title: "Mirror text in real time", slug: "react-easy-extra-07-text-mirror", topicSlug: "controlled-inputs", objective: "Display exactly what the user types in a preview area." },
+  { title: "Reusable status chip", slug: "react-easy-extra-08-status-chip", topicSlug: "props-state", objective: "Create a component receiving `status` prop and render different chip text per status." },
+  { title: "List from array prop", slug: "react-easy-extra-09-list-from-props", topicSlug: "jsx", objective: "Render a bullet list from an array prop and provide stable keys." },
+  { title: "Tab switcher basics", slug: "react-easy-extra-10-tab-switcher", topicSlug: "usestate", objective: "Implement three tabs and show only the active tab panel." },
+  { title: "Button click logger UI", slug: "react-easy-extra-11-click-log", topicSlug: "props-state", objective: "Store click timestamps in state and show the last five actions." },
+  { title: "Progress step indicator", slug: "react-easy-extra-12-step-indicator", topicSlug: "usestate", objective: "Build previous/next controls for a 4-step indicator with bounds checking." },
+  { title: "Password visibility toggle", slug: "react-easy-extra-13-password-toggle", topicSlug: "forms", objective: "Create a password field with show/hide toggle using local component state." },
+  { title: "Checkbox preferences", slug: "react-easy-extra-14-checkbox-prefs", topicSlug: "forms", objective: "Manage two checkboxes in state and show selected preferences summary." },
+  { title: "Simple accordion item", slug: "react-easy-extra-15-accordion-item", topicSlug: "usestate", objective: "Implement one collapsible section that expands/collapses on header click." },
+  { title: "Like button with count", slug: "react-easy-extra-16-like-button", topicSlug: "usestate", objective: "Build a like button that toggles liked state and adjusts like count accordingly." },
+  { title: "Filter completed tasks", slug: "react-easy-extra-17-filter-completed", topicSlug: "array-methods", objective: "Render static tasks and a toggle to show all vs completed only." },
+  { title: "Render empty state", slug: "react-easy-extra-18-empty-state", topicSlug: "jsx", objective: "Conditionally render an empty state message when list length is zero." },
+  { title: "Profile card props", slug: "react-easy-extra-19-profile-card", topicSlug: "props-state", objective: "Build a reusable profile card component with avatar/name/role props." },
+  { title: "Inline validation message", slug: "react-easy-extra-20-inline-validation", topicSlug: "forms", objective: "Show validation hint under email input if value does not include `@`." },
+  { title: "Resettable timer display", slug: "react-easy-extra-21-resettable-timer", topicSlug: "component-lifecycle", objective: "Use an interval to increase seconds and provide reset button back to zero." },
+  { title: "Counter with step size", slug: "react-easy-extra-22-counter-step", topicSlug: "usestate", objective: "Add configurable step input so increment/decrement uses the selected step." },
+  { title: "Controlled select input", slug: "react-easy-extra-23-controlled-select", topicSlug: "controlled-inputs", objective: "Create a select dropdown and show the currently selected value below it." },
+  { title: "Read and focus with ref", slug: "react-easy-extra-24-focus-ref", topicSlug: "useref", objective: "Use `useRef` to focus an input when a button is clicked." },
+  { title: "Basic route links mock", slug: "react-easy-extra-25-route-links", topicSlug: "react-router", objective: "Render nav links and active label state to simulate basic route switching behavior." },
+].map((cfg, i) => makeGeneratedReactChallenge(cfg, "easy", 27 + i));
+
+const MEDIUM_CHALLENGE_EXPANSION: SeedChallenge[] = [
+  { title: "Debounced search box", slug: "react-medium-extra-01-debounced-search", topicSlug: "useeffect", objective: "Implement a search input that updates displayed query only after 400ms of no typing." },
+  { title: "Paginated list controls", slug: "react-medium-extra-02-pagination", topicSlug: "lifting-state", objective: "Build page state in parent and pass page/handlers to child list + pager components." },
+  { title: "Optimistic toggle action", slug: "react-medium-extra-03-optimistic-toggle", topicSlug: "promises-async", objective: "Apply optimistic UI for a toggle action and rollback on simulated API failure." },
+  { title: "Reducer-based todo state", slug: "react-medium-extra-04-reducer-todos", topicSlug: "usereducer", objective: "Manage add/toggle/remove todo actions with `useReducer` and pure reducer logic." },
+  { title: "Shared auth context", slug: "react-medium-extra-05-auth-context", topicSlug: "usecontext", objective: "Create AuthContext with login/logout and consume auth state in two sibling components." },
+  { title: "Derived state memoization", slug: "react-medium-extra-06-derived-memo", topicSlug: "memoisation", objective: "Compute expensive filtered/sorted data with `useMemo` based on active filters." },
+  { title: "Custom hook: useToggleMap", slug: "react-medium-extra-07-hook-toggle-map", topicSlug: "custom-hooks", objective: "Write a hook for keyed boolean state with `set`, `toggle`, and `reset` helpers." },
+  { title: "Form wizard with steps", slug: "react-medium-extra-08-form-wizard", topicSlug: "forms", objective: "Build a 3-step form that preserves entered values while navigating between steps." },
+  { title: "Keyboard navigation list", slug: "react-medium-extra-09-keyboard-list", topicSlug: "useref", objective: "Support ArrowUp/ArrowDown focus movement across a list of interactive rows." },
+  { title: "Synced query params", slug: "react-medium-extra-10-query-sync", topicSlug: "react-router", objective: "Mirror filter state to URL query params and restore state from URL on load." },
+  { title: "Compound accordion", slug: "react-medium-extra-11-compound-accordion", topicSlug: "props-state", objective: "Create parent-managed accordion where only one section can be open at a time." },
+  { title: "Infinite scroll sentinel", slug: "react-medium-extra-12-infinite-scroll", topicSlug: "component-lifecycle", objective: "Load additional items when scroll reaches bottom sentinel while avoiding duplicate loads." },
+  { title: "Undo toast queue", slug: "react-medium-extra-13-undo-toast", topicSlug: "promises-async", objective: "Implement a dismissible toast queue with undo action and timeout-based auto-close." },
+  { title: "Editable table rows", slug: "react-medium-extra-14-editable-rows", topicSlug: "lifting-state", objective: "Hold table row draft edits in parent and commit/cancel per row." },
+  { title: "Multi-select chips", slug: "react-medium-extra-15-multiselect-chips", topicSlug: "controlled-inputs", objective: "Build multi-select behavior with removable chips and controlled text input." },
+  { title: "Error boundary fallback", slug: "react-medium-extra-16-error-fallback", topicSlug: "error-handling", objective: "Create a route area wrapper that catches render errors and shows a recovery UI." },
+  { title: "Cross-field validation", slug: "react-medium-extra-17-cross-field-validation", topicSlug: "forms", objective: "Validate password + confirm fields and block submit until they match and pass strength checks." },
+  { title: "Reusable modal manager", slug: "react-medium-extra-18-modal-manager", topicSlug: "usecontext", objective: "Implement context-driven modal open/close APIs usable from nested components." },
+  { title: "Memoized row renderer", slug: "react-medium-extra-19-memo-rows", topicSlug: "memoisation", objective: "Render large row list with memoized row component and stable callbacks." },
+  { title: "Stale request cancellation", slug: "react-medium-extra-20-request-cancel", topicSlug: "useeffect", objective: "Cancel/ignore stale fetch responses when request parameters change rapidly." },
+  { title: "Drag reorder state", slug: "react-medium-extra-21-drag-reorder", topicSlug: "array-methods", objective: "Implement list reordering logic from source index to destination index." },
+  { title: "Persisted preferences hook", slug: "react-medium-extra-22-persisted-prefs", topicSlug: "custom-hooks", objective: "Build `useLocalStorageState` hook and use it for user preference toggles." },
+  { title: "Nested route breadcrumbs", slug: "react-medium-extra-23-breadcrumbs", topicSlug: "react-router", objective: "Generate breadcrumbs from nested route metadata and render clickable trail." },
+  { title: "Selection with shift-click", slug: "react-medium-extra-24-shift-select", topicSlug: "usestate", objective: "Support range selection in a checkbox list using shift-click behavior." },
+  { title: "Client-side cache layer", slug: "react-medium-extra-25-client-cache", topicSlug: "promises-async", objective: "Cache fetch results by key and reuse cached data before revalidating in background." },
+].map((cfg, i) => makeGeneratedReactChallenge(cfg, "medium", 52 + i));
+
+const JS_FUNDAMENTALS_CHALLENGE_EXPANSION: SeedChallenge[] = [
+  {
+    title: "Binary search in sorted array",
+    slug: "jsfund-binary-search",
+    difficulty: "easy",
+    topicSlug: "data-structures-basics",
+    type: "js",
+    description:
+      "## Binary search\nImplement `binarySearch(nums, target)` returning the index of `target` in a sorted array, or `-1` when not found.",
+    fnName: "binarySearch",
+    starterCode: "function binarySearch(nums, target) {\n  // your code here\n}\n",
+    solutionCode:
+      "function binarySearch(nums, target) {\n  let lo = 0;\n  let hi = nums.length - 1;\n  while (lo <= hi) {\n    const mid = lo + Math.floor((hi - lo) / 2);\n    if (nums[mid] === target) return mid;\n    if (nums[mid] < target) lo = mid + 1;\n    else hi = mid - 1;\n  }\n  return -1;\n}\n",
+    annotatedSolution:
+      "function binarySearch(nums, target) {\n  // Keep narrowing [lo, hi] until either target is found or the interval is empty.\n  let lo = 0;\n  let hi = nums.length - 1;\n  while (lo <= hi) {\n    const mid = lo + Math.floor((hi - lo) / 2);\n    if (nums[mid] === target) return mid;\n    if (nums[mid] < target) lo = mid + 1;\n    else hi = mid - 1;\n  }\n  return -1;\n}\n",
+    testCases: [
+      { input: [[1, 3, 5, 7, 9], 7], expected_output: 3, description: "finds existing element" },
+      { input: [[1, 3, 5, 7, 9], 2], expected_output: -1, description: "returns -1 when missing" },
+      { input: [[], 1], expected_output: -1, description: "handles empty array" },
+    ],
+    hints: [
+      "Use two pointers `lo` and `hi` over the sorted range.",
+      "Check middle element, then discard half of the range each step.",
+      "Stop when `lo > hi`; return -1 if never matched.",
+    ],
+    orderIndex: 77,
+  },
+  {
+    title: "Reverse words in a sentence",
+    slug: "jsfund-reverse-words",
+    difficulty: "easy",
+    topicSlug: "string-algorithms",
+    type: "js",
+    description:
+      "## Reverse words\nImplement `reverseWords(str)` that reverses word order, trims extra spaces, and joins with single spaces.",
+    fnName: "reverseWords",
+    starterCode: "function reverseWords(str) {\n  // your code here\n}\n",
+    solutionCode:
+      "function reverseWords(str) {\n  return str.trim().split(/\\s+/).reverse().join(' ');\n}\n",
+    annotatedSolution:
+      "function reverseWords(str) {\n  // Normalize whitespace, split into words, reverse order, join back.\n  return str.trim().split(/\\s+/).reverse().join(' ');\n}\n",
+    testCases: [
+      { input: ["the sky is blue"], expected_output: "blue is sky the", description: "basic reversal" },
+      { input: ["  hello   world  "], expected_output: "world hello", description: "collapses extra spaces" },
+      { input: ["one"], expected_output: "one", description: "single word" },
+    ],
+    hints: [
+      "Trim leading/trailing spaces first.",
+      "Split with a regex that handles repeated spaces.",
+      "Reverse the word array then join with one space.",
+    ],
+    orderIndex: 78,
+  },
+  {
+    title: "Character frequency counter",
+    slug: "jsfund-char-frequency",
+    difficulty: "easy",
+    topicSlug: "object-map-patterns",
+    type: "js",
+    description:
+      "## Character frequency\nImplement `charFrequency(str)` returning an object of lowercase alphanumeric character counts.",
+    fnName: "charFrequency",
+    starterCode: "function charFrequency(str) {\n  // your code here\n}\n",
+    solutionCode:
+      "function charFrequency(str) {\n  const out = {};\n  for (const ch of str.toLowerCase()) {\n    if (!/[a-z0-9]/.test(ch)) continue;\n    out[ch] = (out[ch] ?? 0) + 1;\n  }\n  return out;\n}\n",
+    annotatedSolution:
+      "function charFrequency(str) {\n  const out = {};\n  // Normalize to lowercase and count only alphanumeric characters.\n  for (const ch of str.toLowerCase()) {\n    if (!/[a-z0-9]/.test(ch)) continue;\n    out[ch] = (out[ch] ?? 0) + 1;\n  }\n  return out;\n}\n",
+    testCases: [
+      { input: ["aab!B"], expected_output: { a: 2, b: 2 }, description: "ignores punctuation and case" },
+      { input: ["12311"], expected_output: { 1: 3, 2: 1, 3: 1 }, description: "counts numeric chars too" },
+      { input: [""], expected_output: {}, description: "empty string" },
+    ],
+    hints: [
+      "Loop over each character and keep a dictionary of counts.",
+      "Normalize case first so A and a map to same key.",
+      "Skip non-alphanumeric characters with a regex guard.",
+    ],
+    orderIndex: 79,
+  },
+  {
+    title: "Longest unique substring length",
+    slug: "jsfund-longest-unique-substring",
+    difficulty: "medium",
+    topicSlug: "string-algorithms",
+    type: "js",
+    description:
+      "## Sliding window\nImplement `lengthOfLongestUniqueSubstring(s)` returning the max length of a substring with no repeated characters.",
+    fnName: "lengthOfLongestUniqueSubstring",
+    starterCode: "function lengthOfLongestUniqueSubstring(s) {\n  // your code here\n}\n",
+    solutionCode:
+      "function lengthOfLongestUniqueSubstring(s) {\n  let left = 0;\n  let best = 0;\n  const seen = new Map();\n  for (let right = 0; right < s.length; right++) {\n    const ch = s[right];\n    if (seen.has(ch) && seen.get(ch) >= left) left = seen.get(ch) + 1;\n    seen.set(ch, right);\n    best = Math.max(best, right - left + 1);\n  }\n  return best;\n}\n",
+    annotatedSolution:
+      "function lengthOfLongestUniqueSubstring(s) {\n  let left = 0;\n  let best = 0;\n  const seen = new Map();\n  // Expand with `right`; move `left` only when a duplicate enters current window.\n  for (let right = 0; right < s.length; right++) {\n    const ch = s[right];\n    if (seen.has(ch) && seen.get(ch) >= left) left = seen.get(ch) + 1;\n    seen.set(ch, right);\n    best = Math.max(best, right - left + 1);\n  }\n  return best;\n}\n",
+    testCases: [
+      { input: ["abcabcbb"], expected_output: 3, description: "abc is longest" },
+      { input: ["bbbbb"], expected_output: 1, description: "single repeated char" },
+      { input: ["pwwkew"], expected_output: 3, description: "wke is longest" },
+    ],
+    hints: [
+      "Use a sliding window with two pointers.",
+      "Track last-seen index of each character.",
+      "When duplicate appears inside window, move left past previous index.",
+    ],
+    orderIndex: 80,
+  },
+  {
+    title: "First unique character index",
+    slug: "jsfund-first-unique-index",
+    difficulty: "medium",
+    topicSlug: "object-map-patterns",
+    type: "js",
+    description:
+      "## Frequency map pattern\nImplement `firstUniqueIndex(str)` returning the index of the first non-repeating character, or `-1` if none exists.",
+    fnName: "firstUniqueIndex",
+    starterCode: "function firstUniqueIndex(str) {\n  // your code here\n}\n",
+    solutionCode:
+      "function firstUniqueIndex(str) {\n  const freq = {};\n  for (const ch of str) freq[ch] = (freq[ch] ?? 0) + 1;\n  for (let i = 0; i < str.length; i++) {\n    if (freq[str[i]] === 1) return i;\n  }\n  return -1;\n}\n",
+    annotatedSolution:
+      "function firstUniqueIndex(str) {\n  const freq = {};\n  // Pass 1: count all chars.\n  for (const ch of str) freq[ch] = (freq[ch] ?? 0) + 1;\n  // Pass 2: first index whose count is exactly one.\n  for (let i = 0; i < str.length; i++) {\n    if (freq[str[i]] === 1) return i;\n  }\n  return -1;\n}\n",
+    testCases: [
+      { input: ["leetcode"], expected_output: 0, description: "first char unique" },
+      { input: ["loveleetcode"], expected_output: 2, description: "middle unique char" },
+      { input: ["aabb"], expected_output: -1, description: "no unique chars" },
+    ],
+    hints: [
+      "Count occurrences of each character first.",
+      "Then iterate the string in order to find first count of 1.",
+      "Return -1 if no such character exists.",
+    ],
+    orderIndex: 81,
+  },
+  {
+    title: "Check balanced brackets",
+    slug: "jsfund-balanced-brackets",
+    difficulty: "medium",
+    topicSlug: "data-structures-basics",
+    type: "js",
+    description:
+      "## Stack problem\nImplement `isBalanced(str)` to validate `()[]{}` bracket pairs.",
+    fnName: "isBalanced",
+    starterCode: "function isBalanced(str) {\n  // your code here\n}\n",
+    solutionCode:
+      "function isBalanced(str) {\n  const stack = [];\n  const closeToOpen = { ')': '(', ']': '[', '}': '{' };\n  for (const ch of str) {\n    if (ch === '(' || ch === '[' || ch === '{') stack.push(ch);\n    else if (closeToOpen[ch]) {\n      if (stack.pop() !== closeToOpen[ch]) return false;\n    }\n  }\n  return stack.length === 0;\n}\n",
+    annotatedSolution:
+      "function isBalanced(str) {\n  const stack = [];\n  const closeToOpen = { ')': '(', ']': '[', '}': '{' };\n  // Push openings; on closing, ensure top of stack is matching opener.\n  for (const ch of str) {\n    if (ch === '(' || ch === '[' || ch === '{') stack.push(ch);\n    else if (closeToOpen[ch]) {\n      if (stack.pop() !== closeToOpen[ch]) return false;\n    }\n  }\n  return stack.length === 0;\n}\n",
+    testCases: [
+      { input: ["()[]{}"], expected_output: true, description: "simple balanced" },
+      { input: ["([{}])"], expected_output: true, description: "nested balanced" },
+      { input: ["(]"], expected_output: false, description: "mismatch" },
+      { input: ["(("], expected_output: false, description: "unclosed" },
+    ],
+    hints: [
+      "A stack is ideal for nested matching problems.",
+      "Push opening brackets, verify and pop on closing brackets.",
+      "Balanced only if all closings match and stack ends empty.",
+    ],
+    orderIndex: 82,
+  },
+  {
+    title: "Recursive sum of nested numbers",
+    slug: "jsfund-sum-nested",
+    difficulty: "medium",
+    topicSlug: "recursion-fundamentals",
+    type: "js",
+    description:
+      "## Recursive traversal\nImplement `sumNested(arr)` to sum all numbers in arbitrarily nested arrays.",
+    fnName: "sumNested",
+    starterCode: "function sumNested(arr) {\n  // your code here\n}\n",
+    solutionCode:
+      "function sumNested(arr) {\n  let sum = 0;\n  for (const v of arr) {\n    if (Array.isArray(v)) sum += sumNested(v);\n    else sum += v;\n  }\n  return sum;\n}\n",
+    annotatedSolution:
+      "function sumNested(arr) {\n  let sum = 0;\n  // Recurse into sub-arrays; add plain numbers directly.\n  for (const v of arr) {\n    if (Array.isArray(v)) sum += sumNested(v);\n    else sum += v;\n  }\n  return sum;\n}\n",
+    testCases: [
+      { input: [[1, [2, [3, 4]], 5]], expected_output: 15, description: "sums deep nesting" },
+      { input: [[-1, [2], 3]], expected_output: 4, description: "handles negatives" },
+      { input: [[[]]], expected_output: 0, description: "empty nested arrays" },
+    ],
+    hints: [
+      "Think base + recursive case per element.",
+      "If element is array, recurse; otherwise add directly.",
+      "Accumulate total and return it at each level.",
+    ],
+    orderIndex: 83,
+  },
+  {
+    title: "Analyze two snippets by Big-O",
+    slug: "jsfund-classify-big-o",
+    difficulty: "easy",
+    topicSlug: "big-o-basics",
+    type: "js",
+    description:
+      "## Big-O classification\nImplement `classifyComplexity(kind)` where `kind` is `'single-loop'`, `'nested-loop'`, or `'binary-search'` and return `'O(n)'`, `'O(n^2)'`, or `'O(log n)'` respectively.",
+    fnName: "classifyComplexity",
+    starterCode: "function classifyComplexity(kind) {\n  // your code here\n}\n",
+    solutionCode:
+      "function classifyComplexity(kind) {\n  if (kind === 'single-loop') return 'O(n)';\n  if (kind === 'nested-loop') return 'O(n^2)';\n  if (kind === 'binary-search') return 'O(log n)';\n  return 'unknown';\n}\n",
+    annotatedSolution:
+      "function classifyComplexity(kind) {\n  // Direct mapping challenge to reinforce Big-O recognition patterns.\n  if (kind === 'single-loop') return 'O(n)';\n  if (kind === 'nested-loop') return 'O(n^2)';\n  if (kind === 'binary-search') return 'O(log n)';\n  return 'unknown';\n}\n",
+    testCases: [
+      { input: ["single-loop"], expected_output: "O(n)", description: "linear scan" },
+      { input: ["nested-loop"], expected_output: "O(n^2)", description: "quadratic nested loop" },
+      { input: ["binary-search"], expected_output: "O(log n)", description: "divide-and-conquer" },
+    ],
+    hints: [
+      "Map each known kind to its complexity string.",
+      "Use simple conditionals for the three supported values.",
+      "Return fallback for unknown input.",
+    ],
+    orderIndex: 84,
+  },
+];
+
+const withReactTestCases = (challenge: SeedChallenge): SeedChallenge => {
+  if (challenge.type !== "react" || challenge.testCases.length > 0) {
+    return challenge;
+  }
+  const checks = challenge.reactChecklist?.slice(0, 3) ?? ["Manual verification required"];
+  return {
+    ...challenge,
+    testCases: checks.map((description, index) => ({
+      input: ["manual", index + 1],
+      expected_output: "pass",
+      description,
+    })),
+  };
+};
+
+const CHALLENGES_RAW: SeedChallenge[] = [
   // ── 1. flatten (easy) ──────────────────────────────────────────────────────
   {
     title: "Implement flatten(arr, depth)",
@@ -914,4 +1238,9 @@ export const CHALLENGES: SeedChallenge[] = [
     ],
     orderIndex: 26,
   },
+  ...EASY_CHALLENGE_EXPANSION,
+  ...MEDIUM_CHALLENGE_EXPANSION,
+  ...JS_FUNDAMENTALS_CHALLENGE_EXPANSION,
 ];
+
+export const CHALLENGES: SeedChallenge[] = CHALLENGES_RAW.map(withReactTestCases);

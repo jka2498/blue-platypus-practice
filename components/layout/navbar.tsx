@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { Flame, Layers, Menu, X, Zap } from "lucide-react";
+import { Flame, Layers, Menu, X, Zap, LogOut } from "lucide-react";
 import { NAV_ITEMS } from "@/lib/nav";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
+import { signOut } from "@/app/actions/auth";
 import { cn } from "@/lib/utils";
 
 interface NavbarProps {
@@ -13,10 +14,10 @@ interface NavbarProps {
   xp: number;
   streak: number;
   levelName: string;
-  authMode: "local" | "auth0";
+  level: number;
 }
 
-export function Navbar({ displayName, xp, streak, levelName, authMode }: NavbarProps) {
+export function Navbar({ displayName, xp, streak, levelName, level }: NavbarProps) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
@@ -44,7 +45,7 @@ export function Navbar({ displayName, xp, streak, levelName, authMode }: NavbarP
                 href={item.href}
                 aria-current={isActive(item.href) ? "page" : undefined}
                 className={cn(
-                  "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
+                  "flex items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
                   isActive(item.href)
                     ? "bg-accent/10 text-accent"
                     : "text-muted-foreground hover:bg-muted-hover hover:text-foreground",
@@ -57,8 +58,8 @@ export function Navbar({ displayName, xp, streak, levelName, authMode }: NavbarP
           </nav>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="hidden items-center gap-3 sm:flex">
+        <div className="flex items-center gap-2 whitespace-nowrap">
+          <div className="hidden items-center gap-3 2xl:flex">
             <span
               className="flex items-center gap-1.5 rounded-full border bg-surface px-3 py-1 text-sm font-semibold"
               title={`${streak}-day streak`}
@@ -75,21 +76,44 @@ export function Navbar({ displayName, xp, streak, levelName, authMode }: NavbarP
             </span>
           </div>
 
-          <div className="hidden text-right text-sm leading-tight md:block">
-            <div className="font-semibold">{displayName ?? "Learner"}</div>
-            <div className="text-xs text-muted-foreground">{levelName}</div>
+          <div className="hidden items-center gap-3 lg:flex">
+            <Link
+              href="/profile"
+              className="group flex items-center gap-2.5 rounded-lg px-3 py-1.5 transition hover:bg-muted-hover"
+              title={levelName}
+            >
+              <span className="max-w-[8rem] truncate text-sm font-semibold">{displayName ?? "Learner"}</span>
+              <div className="relative h-8 w-8">
+                <svg className="h-full w-full" viewBox="0 0 32 32" fill="none">
+                  <circle cx="16" cy="16" r="14" stroke="currentColor" strokeWidth="2" className="text-border" />
+                  <circle
+                    cx="16"
+                    cy="16"
+                    r="14"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeDasharray={`${Math.min(level * 2.8, 87.96)} 87.96`}
+                    className="text-accent transition-all"
+                    strokeLinecap="round"
+                  />
+                </svg>
+                <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-foreground">
+                  {level}
+                </span>
+              </div>
+            </Link>
           </div>
 
           <ThemeToggle />
 
-          {authMode === "auth0" ? (
-            <a
-              href="/api/auth/logout"
-              className="hidden rounded-lg px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground md:inline"
-            >
-              Sign out
-            </a>
-          ) : null}
+          <button
+            onClick={() => signOut()}
+            className="hidden items-center gap-2 whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground lg:inline-flex"
+            title="Sign out"
+          >
+            <LogOut className="h-4 w-4" />
+            <span>Sign out</span>
+          </button>
 
           <button
             type="button"
@@ -123,6 +147,13 @@ export function Navbar({ displayName, xp, streak, levelName, authMode }: NavbarP
                 {item.label}
               </Link>
             ))}
+            <button
+              onClick={() => signOut()}
+              className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-muted-hover"
+            >
+              <LogOut className="h-4 w-4" />
+              Sign out
+            </button>
           </div>
         </nav>
       ) : null}

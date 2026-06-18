@@ -1,7 +1,6 @@
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { SetupNotice } from "@/components/layout/setup-notice";
-import { authMode } from "@/lib/auth";
 import { getSessionUser } from "@/lib/session";
 import { getLevelInfo } from "@/lib/levels";
 
@@ -15,7 +14,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   try {
     const user = await getSessionUser();
     if (!user) {
-      // Auth0 mode, not logged in — middleware normally redirects, but guard here.
+      // Not logged in — middleware normally redirects, but guard here.
       return <SetupNotice detail="No active session. Please sign in." />;
     }
     const level = getLevelInfo(user.xp);
@@ -27,7 +26,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           xp={user.xp}
           streak={user.streak_days}
           levelName={`Level ${level.level} — ${level.name}`}
-          authMode={authMode()}
+          level={level.level}
         />
         <main className="flex-1">{children}</main>
         <Footer />

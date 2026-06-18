@@ -122,10 +122,10 @@ export function ChallengeWorkspace({ detail }: { detail: ChallengeDetail }) {
 
           <Markdown>{challenge.description}</Markdown>
 
-          {/* Test case preview (JS) */}
-          {!isReact && challenge.test_cases.length > 0 ? (
+          {/* Test case preview */}
+          {challenge.test_cases.length > 0 ? (
             <div>
-              <h2 className="heading-3 mb-2">Example tests</h2>
+              <h2 className="heading-3 mb-2">Example checks</h2>
               <ul className="space-y-2">
                 {challenge.test_cases.slice(0, 3).map((tc, i) => (
                   <li key={i} className="rounded-lg border bg-surface p-3 font-mono text-xs">

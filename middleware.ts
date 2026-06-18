@@ -1,29 +1,77 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { createServerClient, type CookieOptions } from "@supabase/ssr";
 
-// Route protection.
-//   • AUTH_MODE=local  → everything is open (built-in dev user).
-//   • AUTH_MODE=auth0  → protect all app routes; allow "/", "/migration-guide",
-//     and the Auth0 endpoints under /api/auth.
+// Route protection. All app routes require authentication.
+// Public routes: "/", "/migration-guide", auth screens, and confirmation routes.
 export async function middleware(req: NextRequest) {
-  if (process.env.AUTH_MODE !== "auth0") {
-    return NextResponse.next();
-  }
-
   const path = req.nextUrl.pathname;
   const isPublic =
     path === "/" ||
     path.startsWith("/migration-guide") ||
+    path === "/signin" ||
+    path === "/signup" ||
+    path.startsWith("/auth") ||
     path.startsWith("/api/auth");
-  if (isPublic) return NextResponse.next();
 
-  const { getSession } = await import("@auth0/nextjs-auth0/edge");
-  const res = NextResponse.next();
-  const session = await getSession(req, res);
-  if (!session) {
-    const url = new URL("/api/auth/login", req.url);
+  if (isPublic) {
+    return NextResponse.next();
+  }
+
+  let res = NextResponse.next({
+    request: {
+      headers: req.headers,
+    },
+  });
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return req.cookies.get(name)?.value;
+        },
+        set(name: string, value: string, options: CookieOptions) {
+          req.cookies.set(name, value);
+          res = NextResponse.next({
+            request: {
+              headers: req.headers,
+            },
+          });
+          res.cookies.set({
+            name,
+            value,
+            ...options,
+          });
+        },
+        remove(name: string, options: CookieOptions) {
+          req.cookies.set(name, "");
+          res = NextResponse.next({
+            request: {
+              headers: req.headers,
+            },
+          });
+          res.cookies.set({
+            name,
+            value: "",
+            ...options,
+            maxAge: 0,
+          });
+        },
+      },
+    }
+  );
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    const url = new URL("/signin", req.url);
     url.searchParams.set("returnTo", path);
     return NextResponse.redirect(url);
   }
+
   return res;
 }
 

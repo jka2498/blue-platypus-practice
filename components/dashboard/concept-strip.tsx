@@ -35,18 +35,18 @@ export function ConceptStrip() {
           Full guide <ArrowRight className="h-3.5 w-3.5" />
         </Link>
       </div>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {CONCEPTS.map((c) => (
           <div
             key={c.angular}
-            className="rounded-xl border bg-surface p-4 shadow-card"
+            className="min-w-0 rounded-xl border bg-surface p-5 shadow-card"
           >
-            <div className="flex items-center gap-2 font-mono text-sm">
-              <span className="text-muted-foreground">{c.angular}</span>
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-sm leading-tight">
+              <span className="shrink-0 text-muted-foreground">{c.angular}</span>
               <ArrowRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
               <span className={`font-semibold ${c.accent}`}>{c.react}</span>
             </div>
-            <p className="mt-2 text-xs text-muted-foreground">{c.note}</p>
+            <p className="mt-3 text-sm text-muted-foreground">{c.note}</p>
           </div>
         ))}
       </div>

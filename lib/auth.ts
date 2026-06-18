@@ -1,50 +1,66 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // Auth abstraction. SERVER ONLY.
 //
-// Two modes, selected by AUTH_MODE:
-//   • "local" (default) — a built-in dev user. The app works instantly with no
-//     external setup. Progress saves normally against this user.
-//   • "auth0"          — real Auth0 session; the Auth0 `sub` becomes auth0_id.
+// Uses Supabase Auth. The Supabase user UUID becomes auth0_id in the users table.
 //
 // `getActiveUser()` resolves the identity, upserts the Supabase `users` row, and
 // recalculates the login streak (awarding the daily streak XP at most once/day).
 // ─────────────────────────────────────────────────────────────────────────────
 
+import { createServerClient, type CookieOptions } from "@supabase/ssr";
+import { cookies } from "next/headers";
 import type { AuthUser, User } from "@/types";
 import { getSupabaseAdmin } from "@/lib/supabase";
 import { awardXp, XP_RULES } from "@/lib/xp";
 import { daysBetween, todayISO } from "@/lib/utils";
 
-export const LOCAL_USER_ID = "local-dev-user";
-
-export function authMode(): "local" | "auth0" {
-  return process.env.AUTH_MODE === "auth0" ? "auth0" : "local";
-}
-
-/** Resolve the raw auth identity (no DB). Returns null when unauthenticated. */
+/** Resolve the raw auth identity from Supabase Auth (no DB). Returns null when unauthenticated. */
 export async function getAuthUser(): Promise<AuthUser | null> {
-  if (authMode() === "local") {
-    return {
-      auth0_id: LOCAL_USER_ID,
-      email: process.env.LOCAL_USER_EMAIL ?? "you@example.com",
-      display_name: process.env.LOCAL_USER_NAME ?? "Local Developer",
-    };
-  }
-
-  // Auth0 mode — import lazily so local mode never loads the SDK/env.
   try {
-    const { getSession } = await import("@auth0/nextjs-auth0");
-    const session = await getSession();
-    if (!session?.user?.sub) return null;
+    const cookieStore = await cookies();
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get(name: string) {
+            return cookieStore.get(name)?.value;
+          },
+          set(name: string, value: string, options: CookieOptions) {
+            try {
+              cookieStore.set(name, value, options);
+            } catch {
+              // Server Components can be read-only for cookies; middleware refreshes sessions.
+            }
+          },
+          remove(name: string, options: CookieOptions) {
+            try {
+              cookieStore.set(name, "", { ...options, maxAge: 0 });
+            } catch {
+              // Server Components can be read-only for cookies; middleware refreshes sessions.
+            }
+          },
+        },
+      },
+    );
+
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
+
+    if (error || !user) {
+      return null;
+    }
+
     return {
-      auth0_id: session.user.sub,
-      email: (session.user.email as string | undefined) ?? null,
+      auth0_id: user.id,
+      email: user.email ?? null,
       display_name:
-        (session.user.name as string | undefined) ??
-        (session.user.nickname as string | undefined) ??
-        null,
+        (user.user_metadata?.name as string | undefined) ?? user.email ?? "User",
     };
-  } catch {
+  } catch (err) {
+    console.error("Failed to get auth user:", err);
     return null;
   }
 }

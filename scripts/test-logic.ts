@@ -161,11 +161,11 @@ async function main() {
     assert.equal(failures.length, 0, `failing JS solutions: ${failures.join(", ")}`);
   });
 
-  await test("react challenges have a checklist and no JS test cases", () => {
+  await test("react challenges have a checklist and explicit test cases", () => {
     for (const c of CHALLENGES) {
       if (c.type !== "react") continue;
       assert.ok((c.reactChecklist?.length ?? 0) > 0, `react ${c.slug} checklist`);
-      assert.equal(c.testCases.length, 0, `react ${c.slug} testCases`);
+      assert.ok(c.testCases.length > 0, `react ${c.slug} testCases`);
     }
   });
 

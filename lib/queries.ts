@@ -24,7 +24,16 @@ import { getSupabaseAdmin } from "@/lib/supabase";
 import { getLevelInfo } from "@/lib/levels";
 import { LEARNING_TRACKS } from "@/lib/content-config";
 import { isDue } from "@/lib/sm2";
+import { getSessionUser } from "@/lib/session";
 import { todayISO, addDays, clamp } from "@/lib/utils";
+import {
+  generateFallbackMcqs,
+  generatePracticeChallenges,
+  getRoadmapPhaseMeta,
+  getTopicLesson,
+  getTopicSummary,
+  type RoadmapPracticeChallenge,
+} from "@/lib/javascript-roadmap";
 
 // ── Topics ────────────────────────────────────────────────────────────────────
 
@@ -34,6 +43,145 @@ export async function getTopics(): Promise<Topic[]> {
     .select("*")
     .order("order_index", { ascending: true });
   return (data ?? []) as Topic[];
+}
+
+// ── JavaScript roadmap chapter learning path ────────────────────────────────
+
+export interface JsRoadmapChapterItem {
+  topic: Topic;
+  summary: string;
+  quizCount: number;
+  challengeCount: number;
+  phaseId: "foundations" | "applied-core" | "interview-readiness";
+  phaseTitle: string;
+  phaseDescription: string;
+  phaseOrder: number;
+  stepInPhase: number;
+  sequenceOrder: number;
+}
+
+export interface JsRoadmapChapterChallenge {
+  id: string;
+  title: string;
+  difficulty: "easy" | "medium" | "hard";
+  prompt: string;
+  source: "database" | "generated";
+  slug?: string;
+}
+
+export interface JsRoadmapChapterData {
+  topic: Topic;
+  summary: string;
+  mcqs: QuizQuestion[];
+  challenges: JsRoadmapChapterChallenge[];
+}
+
+export async function getJavascriptRoadmapChapters(): Promise<JsRoadmapChapterItem[]> {
+  const supabase = getSupabaseAdmin();
+  const [{ data: topicsData }, { data: quizData }, { data: challengesData }] =
+    await Promise.all([
+      supabase.from("topics").select("*").eq("track", "javascript").order("order_index"),
+      supabase.from("quiz_questions").select("topic_id"),
+      supabase.from("challenges").select("topic_id, type"),
+    ]);
+
+  const topics = (topicsData ?? []) as Topic[];
+  const quizCounts = new Map<string, number>();
+  const challengeCounts = new Map<string, number>();
+
+  for (const q of (quizData ?? []) as { topic_id: string | null }[]) {
+    if (!q.topic_id) continue;
+    quizCounts.set(q.topic_id, (quizCounts.get(q.topic_id) ?? 0) + 1);
+  }
+
+  for (const c of (challengesData ?? []) as { topic_id: string | null; type: string }[]) {
+    if (!c.topic_id) continue;
+    if (c.type !== "js") continue;
+    challengeCounts.set(c.topic_id, (challengeCounts.get(c.topic_id) ?? 0) + 1);
+  }
+
+  return topics
+    .map((topic) => {
+      const phaseMeta = getRoadmapPhaseMeta(topic.slug);
+      return {
+        topic,
+        summary: getTopicSummary(topic.slug, topic.name),
+        quizCount: quizCounts.get(topic.id) ?? 0,
+        challengeCount: challengeCounts.get(topic.id) ?? 0,
+        ...phaseMeta,
+      };
+    })
+    .sort((a, b) => a.sequenceOrder - b.sequenceOrder);
+}
+
+export async function getJavascriptRoadmapChapterBySlug(
+  slug: string,
+): Promise<JsRoadmapChapterData | null> {
+  const supabase = getSupabaseAdmin();
+  const { data: topicData } = await supabase
+    .from("topics")
+    .select("*")
+    .eq("slug", slug)
+    .eq("track", "javascript")
+    .maybeSingle();
+
+  if (!topicData) return null;
+  const topic = topicData as Topic;
+
+  const [{ data: mcqData }, { data: challengeData }] = await Promise.all([
+    supabase
+      .from("quiz_questions")
+      .select("*")
+      .eq("topic_id", topic.id)
+      .order("slug")
+      .limit(12),
+    supabase
+      .from("challenges")
+      .select("id, slug, title, difficulty, description, type")
+      .eq("topic_id", topic.id)
+      .eq("type", "js")
+      .order("order_index")
+      .limit(5),
+  ]);
+
+  const realMcqs = (mcqData ?? []) as QuizQuestion[];
+  const mcqs = realMcqs.length > 0 ? realMcqs : generateFallbackMcqs(topic.name);
+
+  const realChallenges: JsRoadmapChapterChallenge[] = (
+    (challengeData ?? []) as {
+      id: string;
+      slug: string;
+      title: string;
+      difficulty: "easy" | "medium" | "hard";
+      description: string;
+      type: "js";
+    }[]
+  ).map((c) => ({
+    id: c.id,
+    title: c.title,
+    difficulty: c.difficulty,
+    prompt: c.description,
+    source: "database",
+    slug: c.slug,
+  }));
+
+  const generated: RoadmapPracticeChallenge[] = generatePracticeChallenges(topic.slug, topic.name);
+  const needed = Math.max(0, 5 - realChallenges.length);
+  const fillChallenges: JsRoadmapChapterChallenge[] = generated.slice(0, needed).map((c) => ({
+    id: c.id,
+    title: c.title,
+    difficulty: c.difficulty,
+    prompt: c.prompt,
+    source: c.source,
+    slug: c.slug,
+  }));
+
+  return {
+    topic,
+    summary: getTopicLesson(topic.slug, topic.name),
+    mcqs,
+    challenges: [...realChallenges, ...fillChallenges].slice(0, 5),
+  };
 }
 
 // ── Flashcards ──────────────────────────────────────────────────────────────
@@ -581,6 +729,75 @@ function intensity(xp: number): HeatmapDay["level"] {
   if (xp < 40) return 2;
   if (xp < 80) return 3;
   return 4;
+}
+
+export async function getActivityFeed(userId?: string): Promise<ActivityFeedItem[]> {
+  const supabase = getSupabaseAdmin();
+  if (!userId) {
+    const user = await getSessionUser();
+    if (!user) return [];
+    userId = user.id;
+  }
+
+  const [{ data: topicsData }, { data: challengesData }, { data: caData }, { data: qaData }] =
+    await Promise.all([
+      supabase.from("topics").select("*"),
+      supabase.from("challenges").select("*"),
+      supabase
+        .from("challenge_attempts")
+        .select("*")
+        .eq("user_id", userId)
+        .order("attempted_at", { ascending: false })
+        .limit(20),
+      supabase
+        .from("quiz_attempts")
+        .select("*")
+        .eq("user_id", userId)
+        .order("completed_at", { ascending: false })
+        .limit(20),
+    ]);
+
+  const topics = (topicsData ?? []) as Topic[];
+  const topicById = new Map(topics.map((t) => [t.id, t]));
+  const challenges = (challengesData ?? []) as Challenge[];
+  const challengeById = new Map(challenges.map((c) => [c.id, c]));
+  const ca = (caData ?? []) as ChallengeAttempt[];
+  const qa = (qaData ?? []) as {
+    id: string;
+    topic_id: string | null;
+    score: number;
+    total: number;
+    completed_at: string;
+  }[];
+
+  const feed: ActivityFeedItem[] = [];
+
+  for (const a of ca) {
+    const ch = challengeById.get(a.challenge_id);
+    feed.push({
+      id: `ca-${a.id}`,
+      kind: "challenge",
+      title: ch?.title ?? "Coding challenge",
+      detail: a.status === "passed" ? "All tests passed" : "Tests run",
+      passed: a.status === "passed",
+      at: a.attempted_at,
+    });
+  }
+
+  for (const a of qa) {
+    const t = a.topic_id ? topicById.get(a.topic_id) : null;
+    feed.push({
+      id: `qa-${a.id}`,
+      kind: "quiz",
+      title: `${t?.name ?? "Mixed"} quiz`,
+      detail: `Scored ${a.score}/${a.total}`,
+      passed: a.total > 0 ? a.score / a.total >= 0.6 : null,
+      at: a.completed_at,
+    });
+  }
+
+  feed.sort((a, b) => b.at.localeCompare(a.at));
+  return feed;
 }
 
 export { clamp };

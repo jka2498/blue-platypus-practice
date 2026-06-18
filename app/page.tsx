@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { ArrowRight, BookOpen, Code2, LineChart, Layers } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { authMode } from "@/lib/auth";
 
 const FEATURES = [
   {
@@ -22,8 +21,8 @@ const FEATURES = [
 ] as const;
 
 export default function LandingPage() {
-  // CTA target depends on auth mode: local users go straight in; Auth0 users log in.
-  const startHref = authMode() === "auth0" ? "/api/auth/login?returnTo=/dashboard" : "/dashboard";
+  // Users go to dashboard; middleware will redirect to signin if not authenticated
+  const startHref = "/dashboard";
 
   return (
     <div className="flex min-h-screen flex-col">

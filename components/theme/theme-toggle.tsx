@@ -25,16 +25,17 @@ export function ThemeToggle() {
     return <span className="block h-9 w-9" aria-hidden />;
   }
 
-  const current: Mode = (ORDER as readonly string[]).includes(theme ?? "")
+  const current: Mode = (theme && (ORDER as readonly string[]).includes(theme))
     ? (theme as Mode)
     : "system";
-  const next: Mode = ORDER[(ORDER.indexOf(current) + 1) % ORDER.length];
+  const nextIndex = (ORDER.indexOf(current) + 1) % ORDER.length;
+  const next: Mode = ORDER[nextIndex]!;
   const Icon = current === "light" ? Sun : current === "dark" ? Moon : Laptop;
 
   return (
     <button
       type="button"
-      onClick={() => setTheme(next)}
+      onClick={() => setTheme(next as string)}
       className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted-hover hover:text-foreground"
       aria-label={`${LABEL[current]} (click for ${LABEL[next].toLowerCase()})`}
       title={LABEL[current]}

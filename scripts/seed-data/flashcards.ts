@@ -3,6 +3,114 @@
 
 import type { SeedFlashcard } from "./types";
 
+const JS_FUNDAMENTALS_FLASHCARDS: SeedFlashcard[] = [
+  {
+    topicSlug: "data-structures-basics",
+    slug: "ds-array-vs-object-lookup",
+    front: "When should you prefer an object/map over an array for lookups?",
+    back: "Use an object or `Map` for key-based lookup when you need near O(1) access by identifier. Arrays are ideal for ordered iteration but searching by id with `find`/`filter` is O(n).",
+    difficulty: "easy",
+  },
+  {
+    topicSlug: "data-structures-basics",
+    slug: "ds-stack-vs-queue",
+    front: "What is the difference between a stack and a queue?",
+    back: "A stack is LIFO (last in, first out): push/pop from one end. A queue is FIFO (first in, first out): enqueue at back, dequeue at front. Pick based on required processing order.",
+    difficulty: "easy",
+  },
+  {
+    topicSlug: "data-structures-basics",
+    slug: "ds-set-uniqueness",
+    front: "Why is `Set` useful in JavaScript interviews?",
+    back: "`Set` stores unique values and gives fast membership checks (`has`) compared with repeated `array.includes` over large lists. Great for de-duplication and visited tracking.",
+    difficulty: "medium",
+  },
+  {
+    topicSlug: "recursion-fundamentals",
+    slug: "recur-base-case",
+    front: "Why must every recursive function have a base case?",
+    back: "Without a base case, recursion never terminates and eventually overflows the call stack. The base case is the stopping condition that returns a non-recursive value.",
+    difficulty: "easy",
+  },
+  {
+    topicSlug: "recursion-fundamentals",
+    slug: "recur-call-stack",
+    front: "What role does the call stack play in recursion?",
+    back: "Each recursive call adds a new frame to the call stack. Once a base case returns, frames unwind in reverse order, combining results on the way back up.",
+    difficulty: "medium",
+  },
+  {
+    topicSlug: "recursion-fundamentals",
+    slug: "recur-vs-iteration",
+    front: "When might iteration be preferable to recursion in JavaScript?",
+    back: "For very deep input sizes, iteration avoids stack overflow risk and may be easier to optimize. Recursion can be clearer for tree/divide-and-conquer logic.",
+    difficulty: "medium",
+  },
+  {
+    topicSlug: "string-algorithms",
+    slug: "str-two-pointer",
+    front: "What is the two-pointer technique for strings?",
+    back: "Use one pointer from the left and one from the right (or two forward pointers) to compare/transform in linear time, often reducing extra memory use.",
+    difficulty: "easy",
+  },
+  {
+    topicSlug: "string-algorithms",
+    slug: "str-normalize-before-compare",
+    front: "Why normalize strings before checks like palindrome/anagram?",
+    back: "Normalization (lowercasing, trimming, removing punctuation/whitespace) ensures logic compares semantic content, not formatting differences.",
+    difficulty: "easy",
+  },
+  {
+    topicSlug: "string-algorithms",
+    slug: "str-frequency-map",
+    front: "How does a frequency map help with string problems?",
+    back: "Count each character in an object/map, then compare counts or constraints in O(n). It's a common pattern for anagrams, duplicates, and window problems.",
+    difficulty: "medium",
+  },
+  {
+    topicSlug: "object-map-patterns",
+    slug: "map-vs-object",
+    front: "When is `Map` better than plain object `{}`?",
+    back: "`Map` preserves insertion order, supports non-string keys, and provides explicit APIs (`set/get/has/delete`). Objects are fine for simple string-key records.",
+    difficulty: "easy",
+  },
+  {
+    topicSlug: "object-map-patterns",
+    slug: "obj-avoid-prototype-collision",
+    front: "How can plain objects cause key-collision surprises?",
+    back: "Objects inherit prototype properties, so keys can collide in edge cases. `Object.create(null)` or `Map` avoids prototype-chain interference for dictionary-style use.",
+    difficulty: "medium",
+  },
+  {
+    topicSlug: "object-map-patterns",
+    slug: "map-counting-pattern",
+    front: "What is the counting pattern with map/object?",
+    back: "Iterate once, incrementing counts by key: `counts[k] = (counts[k] ?? 0) + 1`. Then evaluate counts for pairs, duplicates, or constraints in a second pass.",
+    difficulty: "medium",
+  },
+  {
+    topicSlug: "big-o-basics",
+    slug: "big-o-time-vs-space",
+    front: "What is the difference between time and space complexity?",
+    back: "Time complexity measures how operations grow with input size; space complexity measures additional memory growth. Strong solutions balance both.",
+    difficulty: "easy",
+  },
+  {
+    topicSlug: "big-o-basics",
+    slug: "big-o-common-orders",
+    front: "Order these from fastest growth to slowest: O(1), O(log n), O(n), O(n^2)",
+    back: "Fastest to slowest growth with larger n is: O(1), O(log n), O(n), O(n^2). Lower growth means better scaling.",
+    difficulty: "easy",
+  },
+  {
+    topicSlug: "big-o-basics",
+    slug: "big-o-nested-loops",
+    front: "Why do nested loops often imply O(n^2)?",
+    back: "If an outer loop runs n times and the inner loop also runs up to n times per outer iteration, total work is roughly n*n.",
+    difficulty: "medium",
+  },
+];
+
 export const FLASHCARDS: SeedFlashcard[] = [
   // ── variables-scope ────────────────────────────────────────────────────────
   {
@@ -648,4 +756,5 @@ export const FLASHCARDS: SeedFlashcard[] = [
     back: "It diffs by element *type* and *key* at each position. Same type + same key → update the existing instance in place. Different type → tear down the subtree and rebuild. This heuristic is O(n) instead of a full O(n³) tree diff.",
     difficulty: "hard",
   },
+  ...JS_FUNDAMENTALS_FLASHCARDS,
 ];
