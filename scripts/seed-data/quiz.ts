@@ -332,7 +332,7 @@ const MEDIUM_QUIZ_ADDITIONS: SeedQuizQuestion[] = [
   makeQuiz(
     "array-methods",
     "q-medium-extra-15-parseint-map",
-    "Why can `['1','2','3'].map(parseInt)` be surprising?",
+    "Why is this surprising?\n\n```javascript\n['1','2','3'].map(parseInt)\n```",
     ["`map` mutates strings", "`parseInt` receives (value, index) and index becomes radix", "`parseInt` is async", "It returns numbers correctly every time"],
     1,
     "`map` passes index as second arg; `parseInt` treats it as radix, producing unexpected results.",
@@ -340,7 +340,7 @@ const MEDIUM_QUIZ_ADDITIONS: SeedQuizQuestion[] = [
   makeQuiz(
     "destructuring",
     "q-medium-extra-16-nested-default",
-    "In `const { a: { b = 2 } = {} } = obj`, default `b=2` is used when:",
+    "When is the default `b=2` used here?\n\n```javascript\nconst { a: { b = 2 } = {} } = obj\n```",
     ["`obj.a.b` is `undefined`", "`obj.a.b` is `null`", "`obj.a` is an object with `b`", "always"],
     0,
     "Destructuring defaults apply only to `undefined`, not `null`.",
@@ -356,7 +356,7 @@ const MEDIUM_QUIZ_ADDITIONS: SeedQuizQuestion[] = [
   makeQuiz(
     "event-loop",
     "q-medium-extra-18-then-chain",
-    "A `.then(() => ...)` callback is queued as:",
+    "A promise callback is queued as:\n\n```javascript\nPromise.resolve().then(() => { /* ... */ })\n```",
     ["Animation frame", "Microtask", "Macrotask timer", "Synchronous call"],
     1,
     "Promise callbacks run in microtask queue after current sync work.",
@@ -372,7 +372,7 @@ const MEDIUM_QUIZ_ADDITIONS: SeedQuizQuestion[] = [
   makeQuiz(
     "controlled-inputs",
     "q-medium-extra-20-null-value",
-    "A controlled text input with `value={null}` is problematic because:",
+    "Why is this problematic in a controlled input?\n\n```javascript\n<input value={null} onChange={...} />\n```",
     ["It crashes React always", "It can switch controlled/uncontrolled behavior", "It becomes read-only by browser rule", "It triggers useEffect loops"],
     1,
     "Controlled inputs should use strings (often empty string) to avoid mode switches.",
@@ -610,7 +610,7 @@ export const QUIZ_QUESTIONS: SeedQuizQuestion[] = [
   {
     topicSlug: "variables-scope",
     slug: "q-const-mutation",
-    question: "Is `const arr = [1]; arr.push(2);` an error?",
+    question: "Is this an error?\n\n```javascript\nconst arr = [1];\narr.push(2);\n```",
     options: [
       "Yes — `const` makes the array immutable.",
       "Yes — you can't call methods on a const.",
@@ -637,7 +637,7 @@ export const QUIZ_QUESTIONS: SeedQuizQuestion[] = [
     topicSlug: "closures",
     slug: "q-closure-loop",
     question:
-      "Using `for (var i = 0; i < 3; i++) setTimeout(() => console.log(i));` logs:",
+      "What does this log?\n\n```javascript\nfor (var i = 0; i < 3; i++) {\n  setTimeout(() => console.log(i));\n}\n```",
     options: ["0 1 2", "3 3 3", "0 0 0", "undefined undefined undefined"],
     correctIndex: 1,
     explanation:
