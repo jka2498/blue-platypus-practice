@@ -71,6 +71,13 @@ export interface QuizAttempt {
   completed_at: string;
 }
 
+export interface QuizReviewQueueEntry {
+  id: string;
+  user_id: string;
+  question_id: string;
+  added_at: string;
+}
+
 export interface TestCase {
   /** Arguments passed to the solution function (positional). */
   input: unknown[];

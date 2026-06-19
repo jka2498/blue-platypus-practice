@@ -1,6 +1,6 @@
 "use client";
 
-import { Trophy, RefreshCw, Sparkles, AlertCircle } from "lucide-react";
+import { Trophy, RefreshCw, Sparkles, AlertCircle, RotateCcw, BookMarked } from "lucide-react";
 import type { QuizQuestion } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Markdown } from "@/components/markdown";
@@ -14,6 +14,8 @@ interface QuizSummaryProps {
   questions: QuizQuestion[];
   answers: (number | null)[];
   onRestart: () => void;
+  onRetryWrong?: (wrongQs: QuizQuestion[]) => void;
+  isReview?: boolean;
 }
 
 function fmtTime(s: number): string {
@@ -30,6 +32,8 @@ export function QuizSummary({
   questions,
   answers,
   onRestart,
+  onRetryWrong,
+  isReview,
 }: QuizSummaryProps) {
   const pct = total > 0 ? Math.round((score / total) * 100) : 0;
   const wrong = questions
@@ -53,14 +57,29 @@ export function QuizSummary({
         <div className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-accent/10 px-3 py-1 font-semibold text-accent">
           <Sparkles className="h-4 w-4" /> +{xpAwarded} XP
         </div>
-        <div className="mt-6 flex justify-center gap-3">
+        <div className="mt-6 flex flex-wrap justify-center gap-3">
           <Button onClick={onRestart} variant="secondary">
-            <RefreshCw className="h-4 w-4" /> New quiz
+            <RefreshCw className="h-4 w-4" /> {isReview ? "Back to quiz" : "New quiz"}
           </Button>
+          {!isReview && wrong.length > 0 && onRetryWrong ? (
+            <Button onClick={() => onRetryWrong(wrong.map((w) => w.q))}>
+              <RotateCcw className="h-4 w-4" /> Retry {wrong.length} wrong answer{wrong.length === 1 ? "" : "s"}
+            </Button>
+          ) : null}
         </div>
       </div>
 
-      {wrong.length > 0 ? (
+      {wrong.length === 0 && isReview ? (
+        <div className="rounded-xl border border-success/30 bg-success/5 p-5 text-center">
+          <span className="flex items-center justify-center gap-2 font-semibold text-success">
+            <BookMarked className="h-5 w-5" /> Review complete — all cleared from your queue!
+          </span>
+        </div>
+      ) : wrong.length === 0 ? (
+        <div className="rounded-xl border border-success/30 bg-success/5 p-5 text-center text-sm font-medium text-success">
+          Perfect run — every answer correct. 🎯
+        </div>
+      ) : (
         <div>
           <h3 className="heading-3 mb-3 flex items-center gap-2">
             <AlertCircle className="h-5 w-5 text-medium" /> Review these ({wrong.length})
@@ -95,10 +114,6 @@ export function QuizSummary({
               </li>
             ))}
           </ul>
-        </div>
-      ) : (
-        <div className="rounded-xl border border-success/30 bg-success/5 p-5 text-center text-sm font-medium text-success">
-          Perfect run — every answer correct. 🎯
         </div>
       )}
     </div>

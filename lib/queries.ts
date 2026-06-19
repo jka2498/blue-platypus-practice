@@ -133,19 +133,25 @@ export async function getJavascriptRoadmapChapterBySlug(
       .from("quiz_questions")
       .select("*")
       .eq("topic_id", topic.id)
-      .order("slug")
-      .limit(12),
+      .limit(40),
     supabase
       .from("challenges")
       .select("id, slug, title, difficulty, description, type")
       .eq("topic_id", topic.id)
       .eq("type", "js")
       .order("order_index")
-      .limit(5),
+      .limit(20),
   ]);
 
   const realMcqs = (mcqData ?? []) as QuizQuestion[];
-  const mcqs = realMcqs.length > 0 ? realMcqs : generateFallbackMcqs(topic.name);
+  // Fisher-Yates shuffle for random question order each visit
+  for (let i = realMcqs.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const tmp = realMcqs[i]!;
+    realMcqs[i] = realMcqs[j]!;
+    realMcqs[j] = tmp;
+  }
+  const mcqs = realMcqs.length > 0 ? realMcqs.slice(0, 12) : generateFallbackMcqs(topic.name);
 
   const realChallenges: JsRoadmapChapterChallenge[] = (
     (challengeData ?? []) as {
@@ -291,6 +297,40 @@ export async function getQuizTopics(): Promise<QuizTopicOption[]> {
   return topics
     .map((topic) => ({ topic, questionCount: counts.get(topic.id) ?? 0 }))
     .filter((o) => o.questionCount > 0);
+}
+
+// ── Quiz review queue ───────────────────────────────────────────────────────
+
+export interface ReviewQueueData {
+  count: number;
+  questions: QuizQuestion[];
+}
+
+/** Fetch all questions the user has previously answered incorrectly. */
+export async function getReviewQueueData(userId: string): Promise<ReviewQueueData> {
+  const supabase = getSupabaseAdmin();
+  const { data: queueData } = await supabase
+    .from("quiz_review_queue")
+    .select("question_id")
+    .eq("user_id", userId)
+    .order("added_at", { ascending: true });
+
+  const questionIds = ((queueData ?? []) as { question_id: string }[]).map(
+    (r) => r.question_id,
+  );
+  if (questionIds.length === 0) return { count: 0, questions: [] };
+
+  const { data } = await supabase
+    .from("quiz_questions")
+    .select("*")
+    .in("id", questionIds);
+
+  const questions = (data ?? []) as QuizQuestion[];
+  // Preserve the order from the queue (oldest added first).
+  const orderMap = new Map(questionIds.map((id, i) => [id, i]));
+  questions.sort((a, b) => (orderMap.get(a.id) ?? 0) - (orderMap.get(b.id) ?? 0));
+
+  return { count: questions.length, questions };
 }
 
 /** Fetch up to `limit` questions, shuffled. `topicId === null` → mixed. */

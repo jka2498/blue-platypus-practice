@@ -1,13 +1,17 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { CheckCircle2, Code2, ListChecks, Lock, PlayCircle } from "lucide-react";
 import { Markdown } from "@/components/markdown";
+import { ChallengeWorkspace } from "@/components/challenges/challenge-workspace";
+import { QuestionCard } from "@/components/quiz/question-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
+import type { ChallengeDetail } from "@/lib/queries";
 import type { QuizQuestion } from "@/types";
 
 type ChapterChallenge = {
@@ -21,23 +25,32 @@ type ChapterChallenge = {
 
 type Stage = "summary" | "mcq" | "challenge";
 
-const LETTERS = ["A", "B", "C", "D"];
-
-function stripCodeBlocks(markdown: string): string {
-  return markdown.replace(/```[\s\S]*?```/g, "[code snippet]");
-}
+type ChallengeTrackItem = {
+  id: string;
+  slug: string;
+  title: string;
+  difficulty: "easy" | "medium" | "hard";
+  status: "passed" | "attempted" | "failed" | "not_started";
+};
 
 export function ChapterLearningPath({
   title,
   summary,
   mcqs,
   challenge,
+  challengeDetail,
+  challengeTrack,
+  activeChallengeSlug,
 }: {
   title: string;
   summary: string;
   mcqs: QuizQuestion[];
   challenge: ChapterChallenge | null;
+  challengeDetail: ChallengeDetail | null;
+  challengeTrack: ChallengeTrackItem[];
+  activeChallengeSlug: string | null;
 }) {
+  const router = useRouter();
   const [stage, setStage] = useState<Stage>("summary");
   const [questionIndex, setQuestionIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
@@ -180,45 +193,14 @@ export function ChapterLearningPath({
                 <Progress value={progressValue} />
               </div>
 
-              <div className="space-y-3">
-                <h3 className="text-lg font-bold tracking-tight">
-                  {stripCodeBlocks(currentQuestion.question)}
-                </h3>
-                <div className="space-y-2">
-                  {currentQuestion.options.map((option, optionIndex) => {
-                    const isCorrect = optionIndex === currentQuestion.correct_index;
-                    const isSelected = optionIndex === selectedOption;
-
-                    return (
-                      <button
-                        key={`${currentQuestion.id}-${optionIndex}`}
-                        type="button"
-                        disabled={revealed}
-                        onClick={() => setSelectedOption(optionIndex)}
-                        className={cn(
-                          "w-full rounded-lg border px-3 py-2 text-left text-sm transition",
-                          !revealed && isSelected && "border-accent bg-accent/10",
-                          !revealed && !isSelected && "hover:border-border hover:bg-muted-hover",
-                          revealed && isCorrect && "border-success/40 bg-success/10",
-                          revealed && isSelected && !isCorrect && "border-error/40 bg-error/10",
-                          revealed && !isSelected && !isCorrect && "opacity-70",
-                        )}
-                      >
-                        <span className="font-semibold text-muted-foreground">
-                          {LETTERS[optionIndex]}. 
-                        </span>
-                        {option}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {revealed && currentQuestion.explanation ? (
-                  <div className="rounded-lg border border-accent/30 bg-accent/5 p-3 text-sm text-muted-foreground">
-                    {currentQuestion.explanation}
-                  </div>
-                ) : null}
-              </div>
+              <QuestionCard
+                question={currentQuestion}
+                questionNumber={questionIndex + 1}
+                total={totalQuestions}
+                selected={selectedOption}
+                revealed={revealed}
+                onSelect={setSelectedOption}
+              />
 
               <div className="flex flex-wrap gap-2">
                 <Button type="button" onClick={handleCheckAnswer} disabled={!canCheck}>
@@ -234,6 +216,49 @@ export function ChapterLearningPath({
       ) : null}
 
       {stage === "challenge" ? (
+        challengeDetail ? (
+          <section className="space-y-4" aria-labelledby="chapter-challenge-heading">
+            <h2 id="chapter-challenge-heading" className="heading-3 inline-flex items-center gap-2">
+              <Code2 className="h-5 w-5 text-accent" />
+              Coding Challenge Path
+            </h2>
+
+            {challengeTrack.length > 0 ? (
+              <ol className="grid gap-2 rounded-xl border bg-surface p-3 shadow-card sm:grid-cols-2 lg:grid-cols-5">
+                {challengeTrack.map((item, index) => {
+                  const isActive = item.slug === activeChallengeSlug;
+                  const isPassed = item.status === "passed";
+                  const isLocked = index > 0 && challengeTrack[index - 1]?.status !== "passed";
+
+                  return (
+                    <li
+                      key={item.id}
+                      className={cn(
+                        "rounded-lg border px-3 py-2",
+                        isActive && "border-accent bg-accent/10",
+                        isPassed && "border-success/40 bg-success/10",
+                        isLocked && "border-border opacity-65",
+                      )}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                          Challenge {index + 1}
+                        </span>
+                        {isPassed ? <CheckCircle2 className="h-4 w-4 text-success" /> : isLocked ? <Lock className="h-4 w-4 text-muted-foreground" /> : null}
+                      </div>
+                      <p className="mt-1 line-clamp-2 text-sm font-semibold">{item.title}</p>
+                      <div className="mt-2">
+                        <Badge variant={item.difficulty}>{item.difficulty}</Badge>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ol>
+            ) : null}
+
+            <ChallengeWorkspace detail={challengeDetail} onSolve={() => router.refresh()} />
+          </section>
+        ) : (
         <section className="space-y-4" aria-labelledby="chapter-challenge-heading">
           <h2 id="chapter-challenge-heading" className="heading-3 inline-flex items-center gap-2">
             <Code2 className="h-5 w-5 text-accent" />
@@ -273,6 +298,7 @@ export function ChapterLearningPath({
             </div>
           )}
         </section>
+        )
       ) : null}
     </div>
   );

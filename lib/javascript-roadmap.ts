@@ -421,6 +421,177 @@ When you access \`obj.key\`, JavaScript checks:
 - Optimizing prematurely without measuring bottlenecks.`,
 };
 
+const JS_TOPIC_WORKED_EXAMPLES: Record<string, string> = {
+  "variables-scope": `### Worked Example
+\`\`\`js
+function demo(flag) {
+  const outer = "A";
+  if (flag) {
+    const outer = "B"; // block-scoped shadowing
+    return outer;
+  }
+  return outer;
+}
+\`\`\`
+If \`flag\` is true, result is \`"B"\`; otherwise \`"A"\`.
+`,
+  "array-methods": `### Worked Example
+\`\`\`js
+const prices = [10, 20, 30];
+const withTax = prices.map((p) => p * 1.1);
+const expensive = withTax.filter((p) => p >= 22);
+// withTax -> [11, 22, 33]
+// expensive -> [22, 33]
+\`\`\`
+Use \`map\` for transformation, \`filter\` for selection.
+`,
+  destructuring: `### Worked Example
+\`\`\`js
+const user = { id: 7, profile: { name: "Kai" } };
+const { id, profile: { name = "Unknown" } = {} } = user;
+// id -> 7, name -> "Kai"
+\`\`\`
+Nested defaults prevent crashes when fields are missing.
+`,
+  "error-handling": `### Worked Example
+\`\`\`js
+async function loadUser(id) {
+  try {
+    const res = await fetch("/api/users/" + id);
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    return await res.json();
+  } catch (err) {
+    throw new Error("loadUser failed: " + String(err));
+  }
+}
+\`\`\`
+Catch, add context, and rethrow when the caller should decide recovery.
+`,
+  "this-keyword": `### Worked Example
+\`\`\`js
+const user = {
+  name: "Ada",
+  greet() {
+    return "Hi, " + this.name;
+  },
+};
+const fn = user.greet;
+// fn() -> undefined context in strict mode
+// fn.call(user) -> "Hi, Ada"
+\`\`\`
+Call-site controls \`this\` for normal functions.
+`,
+  closures: `### Worked Example
+\`\`\`js
+function makeCounter() {
+  let count = 0;
+  return () => ++count;
+}
+const c = makeCounter();
+// c() -> 1, c() -> 2
+\`\`\`
+The inner function keeps access to \`count\` via closure.
+`,
+  "event-loop": `### Worked Example
+\`\`\`js
+console.log("A");
+setTimeout(() => console.log("B"), 0);
+Promise.resolve().then(() => console.log("C"));
+console.log("D");
+// Output: A, D, C, B
+\`\`\`
+Microtasks (promise callbacks) run before timers.
+`,
+  "promises-async": `### Worked Example
+\`\`\`js
+async function run() {
+  const [a, b] = await Promise.all([
+    fetch("/a").then((r) => r.json()),
+    fetch("/b").then((r) => r.json()),
+  ]);
+  return { a, b };
+}
+\`\`\`
+Run independent async operations in parallel when possible.
+`,
+  "es-modules": `### Worked Example
+\`\`\`js
+// math.js
+export function add(a, b) { return a + b; }
+
+// app.js
+import { add } from "./math.js";
+add(2, 3); // 5
+\`\`\`
+Named exports make dependencies explicit and refactor-friendly.
+`,
+  prototypes: `### Worked Example
+\`\`\`js
+function User(name) {
+  this.name = name;
+}
+User.prototype.greet = function () {
+  return "Hi, " + this.name;
+};
+new User("Sam").greet(); // "Hi, Sam"
+\`\`\`
+Methods on the prototype are shared across instances.
+`,
+  "data-structures-basics": `### Worked Example
+\`\`\`js
+const arr = ["a", "b", "c"]; // ordered
+const set = new Set(arr);         // uniqueness
+const map = new Map([["a", 1]]); // keyed lookup
+\`\`\`
+Pick structure by access pattern, not habit.
+`,
+  "object-map-patterns": `### Worked Example
+\`\`\`js
+function freq(str) {
+  const out = {};
+  for (const ch of str) out[ch] = (out[ch] ?? 0) + 1;
+  return out;
+}
+\`\`\`
+Frequency maps are the backbone of many interview problems.
+`,
+  "string-algorithms": `### Worked Example
+\`\`\`js
+function isPalindrome(s) {
+  let l = 0, r = s.length - 1;
+  while (l < r) {
+    if (s[l] !== s[r]) return false;
+    l++; r--;
+  }
+  return true;
+}
+\`\`\`
+Two-pointer patterns often reduce complexity from quadratic to linear.
+`,
+  "recursion-fundamentals": `### Worked Example
+\`\`\`js
+function factorial(n) {
+  if (n <= 1) return 1; // base case
+  return n * factorial(n - 1); // recursive step
+}
+\`\`\`
+Every recursive solution needs a base case and progress toward it.
+`,
+  "big-o-basics": `### Worked Example
+\`\`\`js
+function hasDuplicate(nums) {
+  const seen = new Set();
+  for (const n of nums) {
+    if (seen.has(n)) return true;
+    seen.add(n);
+  }
+  return false;
+}
+\`\`\`
+This runs in $O(n)$ time and $O(n)$ space.
+`,
+};
+
 const FALLBACK_MCQ_OPTIONS: [string, string, string, string] = [
   "Because it improves readability and correctness in common scenarios.",
   "Because JavaScript engines require it for all code.",
@@ -436,7 +607,7 @@ export function getTopicSummary(slug: string, topicName: string): string {
 }
 
 export function getTopicLesson(slug: string, topicName: string): string {
-  return (
+  const baseLesson =
     JS_TOPIC_LESSONS[slug] ??
     `${topicName} is a core JavaScript topic.
 
@@ -449,7 +620,18 @@ export function getTopicLesson(slug: string, topicName: string): string {
 - Predict outcomes before running code.
 - Validate with tiny examples.
 - Explain your reasoning in plain language.`
-  );
+  const workedExample =
+    JS_TOPIC_WORKED_EXAMPLES[slug] ??
+    `### Worked Example
+\`\`\`js
+// Replace with a tiny runnable example for ${topicName}
+\`\`\`
+Try predicting the result before running it.`;
+
+  return `${baseLesson}\n\n${workedExample}\n\n### Quick Practice Checklist
+- Explain the output before running code.
+- Identify one edge case and test it.
+- Refactor once for clarity after it works.`;
 }
 
 export function generateFallbackMcqs(topicName: string): QuizQuestion[] {

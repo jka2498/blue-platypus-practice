@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Play,
@@ -29,9 +28,8 @@ import { cn, formatValue } from "@/lib/utils";
 
 const difficultyVariant = { easy: "easy", medium: "medium", hard: "hard" } as const;
 
-export function ChallengeWorkspace({ detail }: { detail: ChallengeDetail }) {
+export function ChallengeWorkspace({ detail, onSolve }: { detail: ChallengeDetail; onSolve?: () => void }) {
   const { challenge, topic } = detail;
-  const router = useRouter();
 
   const [code, setCode] = useState(challenge.starter_code);
   const [output, setOutput] = useState<RunOutput | null>(null);
@@ -80,11 +78,27 @@ export function ChallengeWorkspace({ detail }: { detail: ChallengeDetail }) {
     } catch {
       // ignore persistence failure; result still shown
     }
-    if (out.passed) setSolved(true);
-    else setFailCount((c) => c + 1);
+    if (out.passed) {
+      setSolved(true);
+      onSolve?.();
+    } else {
+      setFailCount((c) => c + 1);
+    }
     setRunning(false);
-    router.refresh();
-  }, [challenge.fn_name, challenge.id, challenge.test_cases, isReact, router]);
+  }, [challenge.fn_name, challenge.id, challenge.test_cases, isReact]);
+
+  // Reset IDE state when a new challenge arrives (on challenge ID change).
+  useEffect(() => {
+    setCode(challenge.starter_code);
+    setOutput(null);
+    setDrawerOpen(false);
+    setRunning(false);
+    setHintLevel(0);
+    setShowSolution(false);
+    setFailCount(detail.failedCount);
+    setSolved(detail.solved);
+    setXpToast(null);
+  }, [challenge.id, detail.failedCount, detail.solved]);
 
   // Cmd/Ctrl+Enter to run (also wired inside Monaco).
   useEffect(() => {

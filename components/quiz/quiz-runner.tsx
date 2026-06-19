@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { ArrowRight, Clock, X } from "lucide-react";
+import { ArrowRight, BookMarked, Clock, X } from "lucide-react";
 import type { QuizQuestion } from "@/types";
 import { submitQuiz } from "@/app/actions/quiz";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,9 @@ interface QuizRunnerProps {
   topicId: string | null;
   timed: boolean;
   onExit: () => void;
+  onRetryWrong?: (wrongQs: QuizQuestion[]) => void;
+  /** When true, show a review-mode banner and skip the timer. */
+  isReview?: boolean;
 }
 
 function fmtTime(s: number): string {
@@ -21,7 +24,7 @@ function fmtTime(s: number): string {
   return `${m}:${(s % 60).toString().padStart(2, "0")}`;
 }
 
-export function QuizRunner({ questions, topicId, timed, onExit }: QuizRunnerProps) {
+export function QuizRunner({ questions, topicId, timed, onExit, onRetryWrong, isReview }: QuizRunnerProps) {
   const total = questions.length;
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<(number | null)[]>(() => Array(total).fill(null));
@@ -113,6 +116,8 @@ export function QuizRunner({ questions, topicId, timed, onExit }: QuizRunnerProp
         questions={questions}
         answers={answers}
         onRestart={onExit}
+        onRetryWrong={onRetryWrong}
+        isReview={isReview}
       />
     );
   }
@@ -121,9 +126,14 @@ export function QuizRunner({ questions, topicId, timed, onExit }: QuizRunnerProp
 
   return (
     <div className="space-y-5">
+      {isReview && (
+        <div className="flex items-center gap-2 rounded-lg border border-medium/30 bg-medium/5 px-3 py-2 text-sm font-medium text-medium">
+          <BookMarked className="h-4 w-4" /> Review mode — get these right to clear them from your queue
+        </div>
+      )}
       <div className="flex items-center gap-4">
         <Progress value={(index / total) * 100} className="flex-1" />
-        {timed ? (
+        {timed && !isReview ? (
           <span className="flex items-center gap-1.5 text-sm font-semibold text-muted-foreground">
             <Clock className="h-4 w-4" /> {fmtTime(seconds)}
           </span>

@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { Shuffle, Timer, BrainCircuit, Loader2, ArrowRight } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useCallback, useState, useTransition } from "react";
+import { Shuffle, Timer, BrainCircuit, Loader2, ArrowRight, BookMarked } from "lucide-react";
 import type { Challenge, QuizQuestion } from "@/types";
 import type { QuizTopicOption } from "@/lib/queries";
 import { fetchQuizSession, fetchInterviewSession } from "@/app/actions/quiz";
@@ -14,9 +15,19 @@ import { cn } from "@/lib/utils";
 type Mode =
   | { kind: "select" }
   | { kind: "quiz"; questions: QuizQuestion[]; topicId: string | null; timed: boolean }
-  | { kind: "interview"; questions: QuizQuestion[]; challenge: Challenge | null };
+  | { kind: "interview"; questions: QuizQuestion[]; challenge: Challenge | null }
+  | { kind: "review"; questions: QuizQuestion[] };
 
-export function QuizApp({ topics }: { topics: QuizTopicOption[] }) {
+export function QuizApp({
+  topics,
+  reviewQuestions,
+  reviewCount,
+}: {
+  topics: QuizTopicOption[];
+  reviewQuestions: QuizQuestion[];
+  reviewCount: number;
+}) {
+  const router = useRouter();
   const [mode, setMode] = useState<Mode>({ kind: "select" });
   const [timed, setTimed] = useState(true);
   const [pending, startTransition] = useTransition();
@@ -40,7 +51,20 @@ export function QuizApp({ topics }: { topics: QuizTopicOption[] }) {
     });
   };
 
-  const reset = () => setMode({ kind: "select" });
+  const startReview = useCallback(() => {
+    if (reviewQuestions.length > 0) setMode({ kind: "review", questions: reviewQuestions });
+  }, [reviewQuestions]);
+
+  /** Called from QuizSummary's "Retry wrong answers" button. */
+  const retryWrong = useCallback((wrongQs: QuizQuestion[]) => {
+    if (wrongQs.length > 0) setMode({ kind: "review", questions: wrongQs });
+  }, []);
+
+  const reset = useCallback(() => {
+    setMode({ kind: "select" });
+    // Refresh server data so the review count badge updates.
+    router.refresh();
+  }, [router]);
 
   if (mode.kind === "quiz") {
     return (
@@ -49,6 +73,19 @@ export function QuizApp({ topics }: { topics: QuizTopicOption[] }) {
         topicId={mode.topicId}
         timed={mode.timed}
         onExit={reset}
+        onRetryWrong={retryWrong}
+      />
+    );
+  }
+  if (mode.kind === "review") {
+    return (
+      <QuizRunner
+        questions={mode.questions}
+        topicId={null}
+        timed={false}
+        onExit={reset}
+        onRetryWrong={retryWrong}
+        isReview
       />
     );
   }
@@ -60,8 +97,8 @@ export function QuizApp({ topics }: { topics: QuizTopicOption[] }) {
 
   return (
     <div className="space-y-8">
-      {/* Interview simulation + options */}
-      <div className="grid gap-4 md:grid-cols-2">
+      {/* Top row: Interview simulation + Review queue + options */}
+      <div className="grid gap-4 md:grid-cols-3">
         <div className="flex flex-col justify-between rounded-2xl border border-accent/30 bg-accent/5 p-6">
           <div>
             <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent text-white">
@@ -69,8 +106,7 @@ export function QuizApp({ topics }: { topics: QuizTopicOption[] }) {
             </span>
             <h2 className="heading-3 mt-3">Interview Simulation</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              30 minutes · 5 conceptual MCQs + 1 coding challenge, scored together. The closest
-              thing to the real thing.
+              30 minutes · 5 conceptual MCQs + 1 coding challenge, scored together.
             </p>
           </div>
           <Button className="mt-4 self-start" onClick={startInterview} disabled={pending}>
@@ -114,6 +150,47 @@ export function QuizApp({ topics }: { topics: QuizTopicOption[] }) {
               <Timer className="h-4 w-4" /> Timer {timed ? "on" : "off"}
             </button>
           </div>
+        </div>
+
+        {/* Review queue card */}
+        <div
+          className={cn(
+            "flex flex-col justify-between rounded-2xl border p-6 shadow-card",
+            reviewCount > 0
+              ? "border-medium/30 bg-medium/5"
+              : "bg-surface opacity-70",
+          )}
+        >
+          <div>
+            <div className="flex items-center gap-2">
+              <span
+                className={cn(
+                  "flex h-10 w-10 items-center justify-center rounded-lg",
+                  reviewCount > 0 ? "bg-medium text-white" : "bg-muted-hover text-foreground",
+                )}
+              >
+                <BookMarked className="h-5 w-5" />
+              </span>
+              {reviewCount > 0 && (
+                <Badge variant="medium">{reviewCount} to review</Badge>
+              )}
+            </div>
+            <h2 className="heading-3 mt-3">Review Queue</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {reviewCount > 0
+                ? `${reviewCount} question${reviewCount === 1 ? "" : "s"} you've gotten wrong. Practice them until you get them right.`
+                : "No questions in your review queue. Get some wrong and they'll appear here!"}
+            </p>
+          </div>
+          <Button
+            className="mt-4 self-start"
+            variant={reviewCount > 0 ? "primary" : "secondary"}
+            onClick={startReview}
+            disabled={reviewCount === 0 || pending}
+          >
+            <BookMarked className="h-4 w-4" />
+            {reviewCount > 0 ? "Practice review queue" : "Queue is empty"}
+          </Button>
         </div>
       </div>
 

@@ -63,11 +63,19 @@ export async function submitQuiz(input: SubmitQuizInput): Promise<SubmitQuizResu
   );
 
   let score = 0;
+  const wrongIds: string[] = [];
+  const correctIds: string[] = [];
   input.questionIds.forEach((qid, i) => {
-    if (correctById.get(qid) === input.answers[i]) score += 1;
+    if (correctById.get(qid) === input.answers[i]) {
+      score += 1;
+      correctIds.push(qid);
+    } else {
+      wrongIds.push(qid);
+    }
   });
   const total = input.questionIds.length;
 
+  // Persist attempt, then maintain the review queue.
   await supabase.from("quiz_attempts").insert({
     user_id: user.id,
     topic_id: input.topicId,
@@ -75,6 +83,22 @@ export async function submitQuiz(input: SubmitQuizInput): Promise<SubmitQuizResu
     total,
     answers: input.answers,
   });
+
+  // Wrong answers → add to review queue (upsert so no duplicates).
+  if (wrongIds.length > 0) {
+    await supabase.from("quiz_review_queue").upsert(
+      wrongIds.map((question_id) => ({ user_id: user.id, question_id })),
+      { onConflict: "user_id,question_id", ignoreDuplicates: true },
+    );
+  }
+  // Correct answers → remove from review queue (they're no longer wrong).
+  if (correctIds.length > 0) {
+    await supabase
+      .from("quiz_review_queue")
+      .delete()
+      .eq("user_id", user.id)
+      .in("question_id", correctIds);
+  }
 
   const xpAwarded = quizXp(score);
   const totalXp = await awardXp(user.id, xpAwarded);
