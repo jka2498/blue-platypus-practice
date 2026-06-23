@@ -52,6 +52,7 @@ export interface JsRoadmapChapterItem {
   summary: string;
   quizCount: number;
   challengeCount: number;
+  challengeStatus: "not_started" | "in_progress" | "completed";
   phaseId: "foundations" | "applied-core" | "interview-readiness";
   phaseTitle: string;
   phaseDescription: string;
@@ -76,38 +77,93 @@ export interface JsRoadmapChapterData {
   challenges: JsRoadmapChapterChallenge[];
 }
 
-export async function getJavascriptRoadmapChapters(): Promise<JsRoadmapChapterItem[]> {
+export async function getJavascriptRoadmapChapters(
+  userId: string,
+): Promise<JsRoadmapChapterItem[]> {
   const supabase = getSupabaseAdmin();
-  const [{ data: topicsData }, { data: quizData }, { data: challengesData }] =
-    await Promise.all([
-      supabase.from("topics").select("*").eq("track", "javascript").order("order_index"),
-      supabase.from("quiz_questions").select("topic_id"),
-      supabase.from("challenges").select("topic_id, type"),
-    ]);
+  const [
+    { data: topicsData },
+    { data: quizData },
+    { data: challengesData },
+    { data: attemptsData },
+  ] = await Promise.all([
+    supabase
+      .from("topics")
+      .select("*")
+      .eq("track", "javascript")
+      .order("order_index"),
+    supabase.from("quiz_questions").select("topic_id"),
+    supabase.from("challenges").select("id, topic_id, type"),
+    supabase
+      .from("challenge_attempts")
+      .select("challenge_id, status")
+      .eq("user_id", userId),
+  ]);
 
   const topics = (topicsData ?? []) as Topic[];
   const quizCounts = new Map<string, number>();
   const challengeCounts = new Map<string, number>();
+  const challengeIdsByTopic = new Map<string, string[]>();
+  const attemptedChallengeIds = new Set(
+    (
+      (attemptsData ?? []) as {
+        challenge_id: string;
+        status: ChallengeStatus;
+      }[]
+    ).map((a) => a.challenge_id),
+  );
+  const passedChallengeIds = new Set(
+    (
+      (attemptsData ?? []) as {
+        challenge_id: string;
+        status: ChallengeStatus;
+      }[]
+    )
+      .filter((a) => a.status === "passed")
+      .map((a) => a.challenge_id),
+  );
 
   for (const q of (quizData ?? []) as { topic_id: string | null }[]) {
     if (!q.topic_id) continue;
     quizCounts.set(q.topic_id, (quizCounts.get(q.topic_id) ?? 0) + 1);
   }
 
-  for (const c of (challengesData ?? []) as { topic_id: string | null; type: string }[]) {
+  for (const c of (challengesData ?? []) as {
+    id: string;
+    topic_id: string | null;
+    type: string;
+  }[]) {
     if (!c.topic_id) continue;
     if (c.type !== "js") continue;
     challengeCounts.set(c.topic_id, (challengeCounts.get(c.topic_id) ?? 0) + 1);
+    const existing = challengeIdsByTopic.get(c.topic_id) ?? [];
+    existing.push(c.id);
+    challengeIdsByTopic.set(c.topic_id, existing);
   }
 
   return topics
     .map((topic) => {
       const phaseMeta = getRoadmapPhaseMeta(topic.slug);
+      const topicChallengeIds = challengeIdsByTopic.get(topic.id) ?? [];
+      const allChallengesPassed =
+        topicChallengeIds.length > 0 &&
+        topicChallengeIds.every((challengeId) =>
+          passedChallengeIds.has(challengeId),
+        );
+      const hasAnyChallengeAttempt = topicChallengeIds.some((challengeId) =>
+        attemptedChallengeIds.has(challengeId),
+      );
+      const challengeStatus = allChallengesPassed
+        ? "completed"
+        : hasAnyChallengeAttempt
+          ? "in_progress"
+          : "not_started";
       return {
         topic,
         summary: getTopicSummary(topic.slug, topic.name),
         quizCount: quizCounts.get(topic.id) ?? 0,
         challengeCount: challengeCounts.get(topic.id) ?? 0,
+        challengeStatus,
         ...phaseMeta,
       };
     })
@@ -151,7 +207,10 @@ export async function getJavascriptRoadmapChapterBySlug(
     realMcqs[i] = realMcqs[j]!;
     realMcqs[j] = tmp;
   }
-  const mcqs = realMcqs.length > 0 ? realMcqs.slice(0, 12) : generateFallbackMcqs(topic.name);
+  const mcqs =
+    realMcqs.length > 0
+      ? realMcqs.slice(0, 12)
+      : generateFallbackMcqs(topic.name);
 
   const realChallenges: JsRoadmapChapterChallenge[] = (
     (challengeData ?? []) as {
@@ -171,16 +230,21 @@ export async function getJavascriptRoadmapChapterBySlug(
     slug: c.slug,
   }));
 
-  const generated: RoadmapPracticeChallenge[] = generatePracticeChallenges(topic.slug, topic.name);
+  const generated: RoadmapPracticeChallenge[] = generatePracticeChallenges(
+    topic.slug,
+    topic.name,
+  );
   const needed = Math.max(0, 5 - realChallenges.length);
-  const fillChallenges: JsRoadmapChapterChallenge[] = generated.slice(0, needed).map((c) => ({
-    id: c.id,
-    title: c.title,
-    difficulty: c.difficulty,
-    prompt: c.prompt,
-    source: c.source,
-    slug: c.slug,
-  }));
+  const fillChallenges: JsRoadmapChapterChallenge[] = generated
+    .slice(0, needed)
+    .map((c) => ({
+      id: c.id,
+      title: c.title,
+      difficulty: c.difficulty,
+      prompt: c.prompt,
+      source: c.source,
+      slug: c.slug,
+    }));
 
   return {
     topic,
@@ -234,14 +298,21 @@ export async function getFlashcardStudyData(
 
   const enriched: FlashcardWithProgress[] = cards.map((c) => {
     const p = progressByCard.get(c.id) ?? null;
-    return { ...c, progress: p, due: isDue(p?.next_review_date ?? null, today) };
+    return {
+      ...c,
+      progress: p,
+      due: isDue(p?.next_review_date ?? null, today),
+    };
   });
 
   // Topic groupings (counts) for the sidebar.
   const groups: FlashcardTopicGroup[] = topics.map((topic) => {
     const inTopic = enriched.filter((c) => c.topic_id === topic.id);
     const mastered = inTopic.filter(
-      (c) => c.progress && (c.progress.last_rating === "good" || c.progress.last_rating === "easy"),
+      (c) =>
+        c.progress &&
+        (c.progress.last_rating === "good" ||
+          c.progress.last_rating === "easy"),
     ).length;
     return {
       topic,
@@ -307,7 +378,9 @@ export interface ReviewQueueData {
 }
 
 /** Fetch all questions the user has previously answered incorrectly. */
-export async function getReviewQueueData(userId: string): Promise<ReviewQueueData> {
+export async function getReviewQueueData(
+  userId: string,
+): Promise<ReviewQueueData> {
   const supabase = getSupabaseAdmin();
   const { data: queueData } = await supabase
     .from("quiz_review_queue")
@@ -328,7 +401,9 @@ export async function getReviewQueueData(userId: string): Promise<ReviewQueueDat
   const questions = (data ?? []) as QuizQuestion[];
   // Preserve the order from the queue (oldest added first).
   const orderMap = new Map(questionIds.map((id, i) => [id, i]));
-  questions.sort((a, b) => (orderMap.get(a.id) ?? 0) - (orderMap.get(b.id) ?? 0));
+  questions.sort(
+    (a, b) => (orderMap.get(a.id) ?? 0) - (orderMap.get(b.id) ?? 0),
+  );
 
   return { count: questions.length, questions };
 }
@@ -360,30 +435,44 @@ export interface ChallengeListItem {
   status: ChallengeStatus | "not_started";
 }
 
-export async function getChallengeList(userId: string): Promise<ChallengeListItem[]> {
+export async function getChallengeList(
+  userId: string,
+): Promise<ChallengeListItem[]> {
   const supabase = getSupabaseAdmin();
-  const [{ data: challengesData }, { data: topicsData }, { data: attemptsData }] =
-    await Promise.all([
-      supabase.from("challenges").select("*").order("order_index"),
-      supabase.from("topics").select("*"),
-      supabase.from("challenge_attempts").select("challenge_id, status").eq("user_id", userId),
-    ]);
+  const [
+    { data: challengesData },
+    { data: topicsData },
+    { data: attemptsData },
+  ] = await Promise.all([
+    supabase.from("challenges").select("*").order("order_index"),
+    supabase.from("topics").select("*"),
+    supabase
+      .from("challenge_attempts")
+      .select("challenge_id, status")
+      .eq("user_id", userId),
+  ]);
 
   const challenges = (challengesData ?? []) as Challenge[];
   const topics = (topicsData ?? []) as Topic[];
-  const attempts = (attemptsData ?? []) as { challenge_id: string; status: ChallengeStatus }[];
+  const attempts = (attemptsData ?? []) as {
+    challenge_id: string;
+    status: ChallengeStatus;
+  }[];
   const topicById = new Map(topics.map((t) => [t.id, t]));
 
   // Best status per challenge: passed > attempted/failed > not_started.
   const statusByChallenge = new Map<string, ChallengeStatus>();
   for (const a of attempts) {
     const cur = statusByChallenge.get(a.challenge_id);
-    if (a.status === "passed" || !cur) statusByChallenge.set(a.challenge_id, a.status);
+    if (a.status === "passed" || !cur)
+      statusByChallenge.set(a.challenge_id, a.status);
   }
 
   return challenges.map((challenge) => ({
     challenge,
-    topic: challenge.topic_id ? topicById.get(challenge.topic_id) ?? null : null,
+    topic: challenge.topic_id
+      ? (topicById.get(challenge.topic_id) ?? null)
+      : null,
     status: statusByChallenge.get(challenge.id) ?? "not_started",
   }));
 }
@@ -411,7 +500,11 @@ export async function getChallengeDetail(
 
   const [{ data: topicData }, { data: attemptsData }] = await Promise.all([
     challenge.topic_id
-      ? supabase.from("topics").select("*").eq("id", challenge.topic_id).maybeSingle()
+      ? supabase
+          .from("topics")
+          .select("*")
+          .eq("id", challenge.topic_id)
+          .maybeSingle()
       : Promise.resolve({ data: null }),
     supabase
       .from("challenge_attempts")
@@ -487,7 +580,10 @@ export async function getDashboardData(userId: string): Promise<DashboardData> {
   const topics = (topicsData ?? []) as Topic[];
   const topicById = new Map(topics.map((t) => [t.id, t]));
   const topicBySlug = new Map(topics.map((t) => [t.slug, t]));
-  const flashcards = (flashcardsData ?? []) as { id: string; topic_id: string | null }[];
+  const flashcards = (flashcardsData ?? []) as {
+    id: string;
+    topic_id: string | null;
+  }[];
   const fp = (fpData ?? []) as FlashcardProgress[];
   const challenges = (challengesData ?? []) as Challenge[];
   const ca = (caData ?? []) as ChallengeAttempt[];
@@ -501,7 +597,9 @@ export async function getDashboardData(userId: string): Promise<DashboardData> {
 
   // Progress rings.
   const masteredCardIds = new Set(
-    fp.filter((p) => p.last_rating === "good" || p.last_rating === "easy").map((p) => p.flashcard_id),
+    fp
+      .filter((p) => p.last_rating === "good" || p.last_rating === "easy")
+      .map((p) => p.flashcard_id),
   );
   const passedChallengeIds = new Set(
     ca.filter((a) => a.status === "passed").map((a) => a.challenge_id),
@@ -509,10 +607,16 @@ export async function getDashboardData(userId: string): Promise<DashboardData> {
 
   const trackProgress: TrackProgress[] = LEARNING_TRACKS.map((lt) => {
     const topicIds = new Set(
-      lt.topicSlugs.map((s) => topicBySlug.get(s)?.id).filter((x): x is string => Boolean(x)),
+      lt.topicSlugs
+        .map((s) => topicBySlug.get(s)?.id)
+        .filter((x): x is string => Boolean(x)),
     );
-    const cardsInTrack = flashcards.filter((c) => c.topic_id && topicIds.has(c.topic_id));
-    const challengesInTrack = challenges.filter((c) => c.topic_id && topicIds.has(c.topic_id));
+    const cardsInTrack = flashcards.filter(
+      (c) => c.topic_id && topicIds.has(c.topic_id),
+    );
+    const challengesInTrack = challenges.filter(
+      (c) => c.topic_id && topicIds.has(c.topic_id),
+    );
     const total = cardsInTrack.length + challengesInTrack.length;
     const completed =
       cardsInTrack.filter((c) => masteredCardIds.has(c.id)).length +
@@ -567,7 +671,9 @@ export async function getDashboardData(userId: string): Promise<DashboardData> {
   const recommendedChallenge =
     [...challenges]
       .filter((c) => !passedChallengeIds.has(c.id))
-      .sort((a, b) => (order[a.difficulty] ?? 1) - (order[b.difficulty] ?? 1))[0] ??
+      .sort(
+        (a, b) => (order[a.difficulty] ?? 1) - (order[b.difficulty] ?? 1),
+      )[0] ??
     challenges[0] ??
     null;
 
@@ -600,7 +706,7 @@ function pickQuizFocus(
     const ratio = v.total > 0 ? v.correct / v.total : 1;
     if (!worst || ratio < worst.ratio) worst = { id, ratio };
   }
-  return worst ? topicById.get(worst.id) ?? null : null;
+  return worst ? (topicById.get(worst.id) ?? null) : null;
 }
 
 // ── Progress page ─────────────────────────────────────────────────────────────
@@ -646,11 +752,21 @@ export async function getProgressData(
   ]);
 
   const topics = (topicsData ?? []) as Topic[];
-  const flashcards = (flashcardsData ?? []) as { id: string; topic_id: string | null }[];
+  const flashcards = (flashcardsData ?? []) as {
+    id: string;
+    topic_id: string | null;
+  }[];
   const fp = (fpData ?? []) as FlashcardProgress[];
-  const challenges = (challengesData ?? []) as { id: string; topic_id: string | null }[];
+  const challenges = (challengesData ?? []) as {
+    id: string;
+    topic_id: string | null;
+  }[];
   const ca = (caData ?? []) as ChallengeAttempt[];
-  const qa = (qaData ?? []) as { topic_id: string | null; score: number; total: number }[];
+  const qa = (qaData ?? []) as {
+    topic_id: string | null;
+    score: number;
+    total: number;
+  }[];
   const al = (alData ?? []) as { activity_date: string; xp_earned: number }[];
 
   // Stats.
@@ -658,7 +774,10 @@ export async function getProgressData(
     ca.filter((a) => a.status === "passed").map((a) => a.challenge_id),
   );
   const quizTotals = qa.reduce(
-    (acc, a) => ({ correct: acc.correct + a.score, total: acc.total + a.total }),
+    (acc, a) => ({
+      correct: acc.correct + a.score,
+      total: acc.total + a.total,
+    }),
     { correct: 0, total: 0 },
   );
 
@@ -681,10 +800,16 @@ export async function getProgressData(
     cur.total += a.total;
     quizByTopic.set(a.topic_id, cur);
   }
-  const passedByTopicChallenges = new Map<string, { passed: number; total: number }>();
+  const passedByTopicChallenges = new Map<
+    string,
+    { passed: number; total: number }
+  >();
   for (const c of challenges) {
     if (!c.topic_id) continue;
-    const cur = passedByTopicChallenges.get(c.topic_id) ?? { passed: 0, total: 0 };
+    const cur = passedByTopicChallenges.get(c.topic_id) ?? {
+      passed: 0,
+      total: 0,
+    };
     cur.total += 1;
     if (passedChallengeIds.has(c.id)) cur.passed += 1;
     passedByTopicChallenges.set(c.topic_id, cur);
@@ -693,22 +818,35 @@ export async function getProgressData(
   const mastery: TopicMastery[] = topics
     .map((topic) => {
       const cards = flashcards.filter((c) => c.topic_id === topic.id);
-      const seen = cards.map((c) => fpByCard.get(c.id)).filter(Boolean) as FlashcardProgress[];
-      const good = seen.filter((p) => p.last_rating === "good" || p.last_rating === "easy").length;
-      const flashcardScore = cards.length === 0 ? 0 : Math.round((good / cards.length) * 100);
+      const seen = cards
+        .map((c) => fpByCard.get(c.id))
+        .filter(Boolean) as FlashcardProgress[];
+      const good = seen.filter(
+        (p) => p.last_rating === "good" || p.last_rating === "easy",
+      ).length;
+      const flashcardScore =
+        cards.length === 0 ? 0 : Math.round((good / cards.length) * 100);
 
       const quiz = quizByTopic.get(topic.id);
-      const quizScore = quiz && quiz.total > 0 ? Math.round((quiz.correct / quiz.total) * 100) : 0;
+      const quizScore =
+        quiz && quiz.total > 0
+          ? Math.round((quiz.correct / quiz.total) * 100)
+          : 0;
 
       const chall = passedByTopicChallenges.get(topic.id);
-      const challengeScore = chall && chall.total > 0 ? Math.round((chall.passed / chall.total) * 100) : 0;
+      const challengeScore =
+        chall && chall.total > 0
+          ? Math.round((chall.passed / chall.total) * 100)
+          : 0;
 
       // Overall = average of the dimensions that have content.
       const dims: number[] = [];
       if (cards.length) dims.push(flashcardScore);
       if (quiz && quiz.total) dims.push(quizScore);
       if (chall && chall.total) dims.push(challengeScore);
-      const overall = dims.length ? Math.round(dims.reduce((a, b) => a + b, 0) / dims.length) : 0;
+      const overall = dims.length
+        ? Math.round(dims.reduce((a, b) => a + b, 0) / dims.length)
+        : 0;
 
       return {
         topicId: topic.id,
@@ -724,7 +862,9 @@ export async function getProgressData(
 
   // Weak areas — topics with some activity but low mastery.
   const weakAreas: WeakArea[] = mastery
-    .filter((m) => hasActivity(m, quizByTopic, fp, flashcards) && m.overall < 60)
+    .filter(
+      (m) => hasActivity(m, quizByTopic, fp, flashcards) && m.overall < 60,
+    )
     .slice(0, 5)
     .map((m) => ({
       topicId: m.topicId,
@@ -743,7 +883,9 @@ export async function getProgressData(
       streak,
       challengesCompleted: passedChallengeIds.size,
       quizAccuracy:
-        quizTotals.total > 0 ? Math.round((quizTotals.correct / quizTotals.total) * 100) : 0,
+        quizTotals.total > 0
+          ? Math.round((quizTotals.correct / quizTotals.total) * 100)
+          : 0,
       flashcardsReviewed: fp.length,
     },
     heatmap,
@@ -759,7 +901,9 @@ function hasActivity(
   flashcards: { id: string; topic_id: string | null }[],
 ): boolean {
   if ((quizByTopic.get(m.topicId)?.total ?? 0) > 0) return true;
-  const cardIds = new Set(flashcards.filter((c) => c.topic_id === m.topicId).map((c) => c.id));
+  const cardIds = new Set(
+    flashcards.filter((c) => c.topic_id === m.topicId).map((c) => c.id),
+  );
   return fp.some((p) => cardIds.has(p.flashcard_id));
 }
 
@@ -771,7 +915,9 @@ function intensity(xp: number): HeatmapDay["level"] {
   return 4;
 }
 
-export async function getActivityFeed(userId?: string): Promise<ActivityFeedItem[]> {
+export async function getActivityFeed(
+  userId?: string,
+): Promise<ActivityFeedItem[]> {
   const supabase = getSupabaseAdmin();
   if (!userId) {
     const user = await getSessionUser();
@@ -779,23 +925,27 @@ export async function getActivityFeed(userId?: string): Promise<ActivityFeedItem
     userId = user.id;
   }
 
-  const [{ data: topicsData }, { data: challengesData }, { data: caData }, { data: qaData }] =
-    await Promise.all([
-      supabase.from("topics").select("*"),
-      supabase.from("challenges").select("*"),
-      supabase
-        .from("challenge_attempts")
-        .select("*")
-        .eq("user_id", userId)
-        .order("attempted_at", { ascending: false })
-        .limit(20),
-      supabase
-        .from("quiz_attempts")
-        .select("*")
-        .eq("user_id", userId)
-        .order("completed_at", { ascending: false })
-        .limit(20),
-    ]);
+  const [
+    { data: topicsData },
+    { data: challengesData },
+    { data: caData },
+    { data: qaData },
+  ] = await Promise.all([
+    supabase.from("topics").select("*"),
+    supabase.from("challenges").select("*"),
+    supabase
+      .from("challenge_attempts")
+      .select("*")
+      .eq("user_id", userId)
+      .order("attempted_at", { ascending: false })
+      .limit(20),
+    supabase
+      .from("quiz_attempts")
+      .select("*")
+      .eq("user_id", userId)
+      .order("completed_at", { ascending: false })
+      .limit(20),
+  ]);
 
   const topics = (topicsData ?? []) as Topic[];
   const topicById = new Map(topics.map((t) => [t.id, t]));

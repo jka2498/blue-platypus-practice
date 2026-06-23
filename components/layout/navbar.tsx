@@ -17,7 +17,13 @@ interface NavbarProps {
   level: number;
 }
 
-export function Navbar({ displayName, xp, streak, levelName, level }: NavbarProps) {
+export function Navbar({
+  displayName,
+  xp,
+  streak,
+  levelName,
+  level,
+}: NavbarProps) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
@@ -38,7 +44,10 @@ export function Navbar({ displayName, xp, streak, levelName, level }: NavbarProp
             <span className="hidden sm:inline">DevPath</span>
           </Link>
 
-          <nav className="hidden items-center gap-1 lg:flex" aria-label="Primary">
+          <nav
+            className="hidden items-center gap-1 lg:flex"
+            aria-label="Primary"
+          >
             {NAV_ITEMS.map((item) => (
               <Link
                 key={item.href}
@@ -82,17 +91,30 @@ export function Navbar({ displayName, xp, streak, levelName, level }: NavbarProp
               className="group flex items-center gap-2.5 rounded-lg px-3 py-1.5 transition hover:bg-muted-hover"
               title={levelName}
             >
-              <span className="max-w-[8rem] truncate text-sm font-semibold">{displayName ?? "Learner"}</span>
+              <span className="max-w-[8rem] truncate text-sm font-semibold">
+                {displayName ?? "Learner"}
+              </span>
               <div className="relative h-8 w-8">
-                <svg className="h-full w-full" viewBox="0 0 32 32" fill="none">
-                  <circle cx="16" cy="16" r="14" stroke="currentColor" strokeWidth="2" className="text-border" />
+                <svg
+                  className="h-full w-full -rotate-90"
+                  viewBox="0 0 32 32"
+                  fill="none"
+                >
                   <circle
                     cx="16"
                     cy="16"
                     r="14"
                     stroke="currentColor"
                     strokeWidth="2"
-                    strokeDasharray={`${Math.min(level * 2.8, 87.96)} 87.96`}
+                    className="text-border"
+                  />
+                  <circle
+                    cx="16"
+                    cy="16"
+                    r="14"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeDasharray={`${((xp % 100) / 100) * 87.96} 87.96`}
                     className="text-accent transition-all"
                     strokeLinecap="round"
                   />

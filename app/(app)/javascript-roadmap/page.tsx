@@ -1,5 +1,11 @@
 import Link from "next/link";
-import { ArrowRight, Code2, ListChecks } from "lucide-react";
+import {
+  ArrowRight,
+  CheckCircle2,
+  Clock3,
+  Code2,
+  ListChecks,
+} from "lucide-react";
 import { getSessionUser } from "@/lib/session";
 import { getJavascriptRoadmapChapters } from "@/lib/queries";
 
@@ -9,7 +15,7 @@ export default async function JavascriptRoadmapPage() {
   const user = await getSessionUser();
   if (!user) return null;
 
-  const chapters = await getJavascriptRoadmapChapters();
+  const chapters = await getJavascriptRoadmapChapters(user.id);
   const phases = chapters.reduce(
     (acc, chapter) => {
       const existing = acc.find((p) => p.id === chapter.phaseId);
@@ -42,18 +48,26 @@ export default async function JavascriptRoadmapPage() {
       <header>
         <h1 className="heading-2">JavaScript Roadmap Learning Path</h1>
         <p className="mt-1 text-muted-foreground">
-          Progressive path from easier fundamentals to harder interview-ready topics. Each chapter
-          follows: lesson summary, MCQ checkpoint, then one topic-specific coding challenge.
+          Progressive path from easier fundamentals to harder interview-ready
+          topics. Each chapter follows: lesson summary, MCQ checkpoint, then a
+          few topic-specific coding challenges.
         </p>
       </header>
 
       <section className="space-y-5">
         {phases.map((phase, phaseIndex) => (
-          <article key={phase.id} className="rounded-2xl border bg-surface p-4 shadow-card sm:p-5">
+          <article
+            key={phase.id}
+            className="rounded-2xl border bg-surface p-4 shadow-card sm:p-5"
+          >
             <div className="mb-4 flex flex-wrap items-center justify-between gap-2 border-b border-border pb-3">
               <div>
-                <h2 className="text-lg font-bold tracking-tight">{phase.title}</h2>
-                <p className="text-sm text-muted-foreground">{phase.description}</p>
+                <h2 className="text-lg font-bold tracking-tight">
+                  {phase.title}
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  {phase.description}
+                </p>
               </div>
               <span className="rounded-full border px-2.5 py-1 text-xs font-semibold text-muted-foreground">
                 {phase.items.length} topics
@@ -72,19 +86,32 @@ export default async function JavascriptRoadmapPage() {
                       <span className="inline-flex h-6 min-w-6 items-center justify-center rounded-md border px-1 text-xs font-bold text-muted-foreground">
                         {phaseIndex + 1}.{stepIndex + 1}
                       </span>
-                      <h3 className="font-semibold leading-tight">{chapter.topic.name}</h3>
+                      <h3 className="font-semibold leading-tight">
+                        {chapter.topic.name}
+                      </h3>
                     </div>
-                    <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground transition group-hover:text-accent" />
+                    <div className="flex items-center gap-2">
+                      {chapter.challengeStatus === "completed" ? (
+                        <CheckCircle2 className="h-4 w-4 shrink-0 text-success" />
+                      ) : chapter.challengeStatus === "in_progress" ? (
+                        <Clock3 className="h-4 w-4 shrink-0 text-amber-500" />
+                      ) : null}
+                      <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground transition group-hover:text-accent" />
+                    </div>
                   </div>
 
-                  <p className="line-clamp-3 text-sm text-muted-foreground">{chapter.summary}</p>
+                  <p className="line-clamp-3 text-sm text-muted-foreground">
+                    {chapter.summary}
+                  </p>
 
                   <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
                     <span className="inline-flex items-center gap-1">
-                      <ListChecks className="h-3.5 w-3.5" /> {chapter.quizCount} MCQs
+                      <ListChecks className="h-3.5 w-3.5" /> {chapter.quizCount}{" "}
+                      MCQs
                     </span>
                     <span className="inline-flex items-center gap-1">
-                      <Code2 className="h-3.5 w-3.5" /> {Math.max(1, chapter.challengeCount)} challenge
+                      <Code2 className="h-3.5 w-3.5" />{" "}
+                      {Math.max(1, chapter.challengeCount)} challenge
                     </span>
                   </div>
                 </Link>
