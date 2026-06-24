@@ -153,11 +153,12 @@ export async function getJavascriptRoadmapChapters(
       const hasAnyChallengeAttempt = topicChallengeIds.some((challengeId) =>
         attemptedChallengeIds.has(challengeId),
       );
-      const challengeStatus = allChallengesPassed
-        ? "completed"
-        : hasAnyChallengeAttempt
-          ? "in_progress"
-          : "not_started";
+      const challengeStatus: JsRoadmapChapterItem["challengeStatus"] =
+        allChallengesPassed
+          ? "completed"
+          : hasAnyChallengeAttempt
+            ? "in_progress"
+            : "not_started";
       return {
         topic,
         summary: getTopicSummary(topic.slug, topic.name),
@@ -347,19 +348,37 @@ export async function getFlashcardStudyData(
 
 // ── Quiz ──────────────────────────────────────────────────────────────────────
 
+const CODE_QUIZ_PREFIXES = ["q-code-snippet-", "q-code-auto-"];
+
+function isCodeQuizRow(row: { slug: string | null }): boolean {
+  return CODE_QUIZ_PREFIXES.some((prefix) => row.slug?.startsWith(prefix));
+}
+
+function normalizeQuizQuestion(row: QuizQuestion): QuizQuestion {
+  return {
+    ...row,
+    question_kind: isCodeQuizRow(row) ? "code" : "text",
+  };
+}
+
 export interface QuizTopicOption {
   topic: Topic;
   questionCount: number;
 }
 
-export async function getQuizTopics(): Promise<QuizTopicOption[]> {
+export async function getQuizTopics(
+  questionKind: QuizQuestion["question_kind"] = "text",
+): Promise<QuizTopicOption[]> {
   const supabase = getSupabaseAdmin();
   const [{ data: topicsData }, { data: questionsData }] = await Promise.all([
     supabase.from("topics").select("*").order("order_index"),
-    supabase.from("quiz_questions").select("topic_id"),
+    supabase.from("quiz_questions").select("topic_id, slug"),
   ]);
   const topics = (topicsData ?? []) as Topic[];
-  const questions = (questionsData ?? []) as { topic_id: string | null }[];
+  const questions = ((questionsData ?? []) as {
+    topic_id: string | null;
+    slug: string | null;
+  }[]).filter((q) => (questionKind === "code" ? isCodeQuizRow(q) : !isCodeQuizRow(q)));
   const counts = new Map<string, number>();
   for (const q of questions) {
     if (!q.topic_id) continue;
@@ -380,6 +399,7 @@ export interface ReviewQueueData {
 /** Fetch all questions the user has previously answered incorrectly. */
 export async function getReviewQueueData(
   userId: string,
+  questionKind: QuizQuestion["question_kind"] = "text",
 ): Promise<ReviewQueueData> {
   const supabase = getSupabaseAdmin();
   const { data: queueData } = await supabase
@@ -398,7 +418,9 @@ export async function getReviewQueueData(
     .select("*")
     .in("id", questionIds);
 
-  const questions = (data ?? []) as QuizQuestion[];
+  const questions = ((data ?? []) as QuizQuestion[])
+    .map(normalizeQuizQuestion)
+    .filter((q) => q.question_kind === questionKind);
   // Preserve the order from the queue (oldest added first).
   const orderMap = new Map(questionIds.map((id, i) => [id, i]));
   questions.sort(
@@ -412,11 +434,14 @@ export async function getReviewQueueData(
 export async function getQuizQuestions(
   topicId: string | null,
   limit = 10,
+  questionKind: QuizQuestion["question_kind"] = "text",
 ): Promise<QuizQuestion[]> {
   let query = getSupabaseAdmin().from("quiz_questions").select("*");
   if (topicId) query = query.eq("topic_id", topicId);
   const { data } = await query;
-  const all = (data ?? []) as QuizQuestion[];
+  const all = ((data ?? []) as QuizQuestion[])
+    .map(normalizeQuizQuestion)
+    .filter((q) => q.question_kind === questionKind);
   // Fisher–Yates shuffle, then slice.
   for (let i = all.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));

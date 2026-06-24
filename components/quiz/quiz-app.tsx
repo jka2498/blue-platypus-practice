@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useState, useTransition } from "react";
 import { Shuffle, Timer, BrainCircuit, Loader2, ArrowRight, BookMarked } from "lucide-react";
@@ -22,10 +23,16 @@ export function QuizApp({
   topics,
   reviewQuestions,
   reviewCount,
+  questionKind = "text",
+  showInterview = true,
+  codePageHref,
 }: {
   topics: QuizTopicOption[];
   reviewQuestions: QuizQuestion[];
   reviewCount: number;
+  questionKind?: QuizQuestion["question_kind"];
+  showInterview?: boolean;
+  codePageHref?: string;
 }) {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>({ kind: "select" });
@@ -36,7 +43,7 @@ export function QuizApp({
   const startQuiz = (topicId: string | null, key: string) => {
     setLoadingKey(key);
     startTransition(async () => {
-      const questions = await fetchQuizSession(topicId, 10);
+      const questions = await fetchQuizSession(topicId, 10, questionKind);
       setLoadingKey(null);
       if (questions.length > 0) setMode({ kind: "quiz", questions, topicId, timed });
     });
@@ -98,35 +105,41 @@ export function QuizApp({
   return (
     <div className="space-y-8">
       {/* Top row: Interview simulation + Review queue + options */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <div className="flex flex-col justify-between rounded-2xl border border-accent/30 bg-accent/5 p-6">
-          <div>
-            <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent text-white">
-              <BrainCircuit className="h-5 w-5" />
-            </span>
-            <h2 className="heading-3 mt-3">Interview Simulation</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              30 minutes · 5 conceptual MCQs + 1 coding challenge, scored together.
-            </p>
+      <div className={cn("grid gap-4", showInterview ? "md:grid-cols-3" : "md:grid-cols-2")}>
+        {showInterview ? (
+          <div className="flex flex-col justify-between rounded-2xl border border-accent/30 bg-accent/5 p-6">
+            <div>
+              <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent text-white">
+                <BrainCircuit className="h-5 w-5" />
+              </span>
+              <h2 className="heading-3 mt-3">Interview Simulation</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                30 minutes · 5 conceptual MCQs + 1 coding challenge, scored together.
+              </p>
+            </div>
+            <Button className="mt-4 self-start" onClick={startInterview} disabled={pending}>
+              {loadingKey === "interview" ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <BrainCircuit className="h-4 w-4" />
+              )}
+              Start simulation
+            </Button>
           </div>
-          <Button className="mt-4 self-start" onClick={startInterview} disabled={pending}>
-            {loadingKey === "interview" ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <BrainCircuit className="h-4 w-4" />
-            )}
-            Start simulation
-          </Button>
-        </div>
+        ) : null}
 
         <div className="flex flex-col justify-between rounded-2xl border bg-surface p-6 shadow-card">
           <div>
             <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted-hover text-foreground">
               <Shuffle className="h-5 w-5" />
             </span>
-            <h2 className="heading-3 mt-3">Quick mixed quiz</h2>
+            <h2 className="heading-3 mt-3">
+              {questionKind === "code" ? "Quick mixed code quiz" : "Quick mixed quiz"}
+            </h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              10 questions drawn from every topic. Great for a daily warm-up.
+              {questionKind === "code"
+                ? "10 code-snippet questions drawn from every topic."
+                : "10 questions drawn from every topic. Great for a daily warm-up."}
             </p>
           </div>
           <div className="mt-4 flex items-center gap-3">
@@ -193,6 +206,22 @@ export function QuizApp({
           </Button>
         </div>
       </div>
+
+      {codePageHref ? (
+        <div className="rounded-2xl border border-accent/30 bg-accent/5 p-4 sm:p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="text-base font-semibold tracking-tight">Code Snippet MCQs</h2>
+              <p className="text-sm text-muted-foreground">
+                Code-answer questions are now in their own page for focused practice.
+              </p>
+            </div>
+            <Button asChild>
+              <Link href={codePageHref}>Open code quiz</Link>
+            </Button>
+          </div>
+        </div>
+      ) : null}
 
       {/* Topic grid */}
       <div>

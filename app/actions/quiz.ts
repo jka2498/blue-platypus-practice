@@ -11,9 +11,10 @@ import { awardXp, quizXp } from "@/lib/xp";
 export async function fetchQuizSession(
   topicId: string | null,
   count = 10,
+  questionKind: QuizQuestion["question_kind"] = "text",
 ): Promise<QuizQuestion[]> {
   await requireUser();
-  return getQuizQuestions(topicId, count);
+  return getQuizQuestions(topicId, count, questionKind);
 }
 
 /** Interview simulation: 5 mixed conceptual MCQs + 1 JS coding challenge. */
@@ -23,7 +24,7 @@ export async function fetchInterviewSession(): Promise<{
 }> {
   await requireUser();
   const [questions, challenge] = await Promise.all([
-    getQuizQuestions(null, 5),
+    getQuizQuestions(null, 5, "text"),
     getRandomJsChallenge(),
   ]);
   return { questions, challenge };

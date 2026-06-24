@@ -19,6 +19,7 @@ export interface SeedQuizQuestion {
   question: string;
   options: [string, string, string, string];
   correctIndex: 0 | 1 | 2 | 3;
+  questionKind?: "text" | "code";
   explanation: string;
 }
 

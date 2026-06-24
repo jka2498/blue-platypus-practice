@@ -57,10 +57,12 @@ export function deepEqual(a: unknown, b: unknown): boolean {
 
 /** Pretty-print any value for display in test result panels. */
 export function formatValue(value: unknown): string {
+  if (typeof value === "function") return `[Function${value.name ? `: ${value.name}` : ""}]`;
   if (typeof value === "string") return JSON.stringify(value);
   if (value === undefined) return "undefined";
   try {
-    return JSON.stringify(value);
+    const json = JSON.stringify(value);
+    return json === undefined ? String(value) : json;
   } catch {
     return String(value);
   }

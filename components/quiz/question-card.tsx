@@ -24,6 +24,8 @@ export function QuestionCard({
   revealed,
   onSelect,
 }: QuestionCardProps) {
+  const renderOptionsAsCode = question.question_kind === "code";
+
   return (
     <div className="rounded-2xl border bg-surface p-6 shadow-card sm:p-8">
       <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -81,7 +83,15 @@ export function QuestionCard({
                   LETTERS[i]
                 )}
               </span>
-              <span className="text-sm font-medium">{opt}</span>
+              {renderOptionsAsCode ? (
+                <div className="min-w-0 flex-1">
+                  <Markdown className="[&_p]:m-0 [&_pre]:my-0 [&_pre]:rounded-md [&_pre]:p-3">
+                    {opt}
+                  </Markdown>
+                </div>
+              ) : (
+                <span className="text-sm font-medium">{opt}</span>
+              )}
             </button>
           );
         })}

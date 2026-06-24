@@ -11,7 +11,16 @@ const makeQuiz = (
   options: [string, string, string, string],
   correctIndex: 0 | 1 | 2 | 3,
   explanation: string,
-): SeedQuizQuestion => ({ topicSlug, slug, question, options, correctIndex, explanation });
+  questionKind: "text" | "code" = "text",
+): SeedQuizQuestion => ({
+  topicSlug,
+  slug,
+  question,
+  options,
+  correctIndex,
+  questionKind,
+  explanation,
+});
 
 const EASY_QUIZ_ADDITIONS: SeedQuizQuestion[] = [
   makeQuiz(
@@ -579,6 +588,149 @@ const JS_FUNDAMENTALS_QUIZ_ADDITIONS: SeedQuizQuestion[] = [
     ["Lower readability only", "More memory usage", "More network calls", "Less determinism"],
     1,
     "Many optimizations improve time complexity by allocating extra space.",
+  ),
+];
+
+const CODE_SNIPPET_QUIZ_ADDITIONS: SeedQuizQuestion[] = [
+  makeQuiz(
+    "array-methods",
+    "q-code-snippet-array-map",
+    "Select the snippet that returns a new array with each number doubled.",
+    [
+      "```javascript\nconst out = nums.map((n) => n * 2);\n```",
+      "```javascript\nnums.forEach((n) => n * 2);\n```",
+      "```javascript\nconst out = nums.filter((n) => n * 2);\n```",
+      "```javascript\nconst out = nums.find((n) => n * 2);\n```",
+    ],
+    0,
+    "`map` returns a transformed array. `forEach` returns `undefined`, and `filter`/`find` do different jobs.",
+    "code",
+  ),
+  makeQuiz(
+    "variables-scope",
+    "q-code-snippet-block-scope",
+    "Which snippet keeps `msg` scoped only inside the if-block?",
+    [
+      "```javascript\nif (ok) {\n  let msg = 'ready';\n}\n```",
+      "```javascript\nif (ok) {\n  var msg = 'ready';\n}\n```",
+      "```javascript\nif (ok) {\n  msg = 'ready';\n}\n```",
+      "```javascript\nif (ok) {\n  const msg = 'ready';\n}\nconsole.log(msg);\n```",
+    ],
+    0,
+    "`let` and `const` are block-scoped. `var` is function-scoped, and implicit assignment leaks in sloppy mode.",
+    "code",
+  ),
+  makeQuiz(
+    "promises-async",
+    "q-code-snippet-await-try-catch",
+    "Pick the snippet that correctly catches an async rejection with async/await.",
+    [
+      "```javascript\ntry {\n  const data = await fetchData();\n} catch (err) {\n  handle(err);\n}\n```",
+      "```javascript\nconst data = await fetchData().catch;\n```",
+      "```javascript\nawait fetchData();\ncatch (err) {\n  handle(err);\n}\n```",
+      "```javascript\ntry await fetchData();\n```",
+    ],
+    0,
+    "A normal `try/catch` around `await` is the idiomatic pattern.",
+    "code",
+  ),
+  makeQuiz(
+    "destructuring",
+    "q-code-snippet-object-rename",
+    "Which snippet renames property `name` to local variable `fullName`?",
+    [
+      "```javascript\nconst { name: fullName } = user;\n```",
+      "```javascript\nconst { fullName: name } = user;\n```",
+      "```javascript\nconst [name as fullName] = user;\n```",
+      "```javascript\nconst { fullName = name } = user;\n```",
+    ],
+    0,
+    "Object destructuring uses `sourceKey: localAlias`.",
+    "code",
+  ),
+  makeQuiz(
+    "event-loop",
+    "q-code-snippet-microtask",
+    "Which snippet schedules a microtask?",
+    [
+      "```javascript\nPromise.resolve().then(() => run());\n```",
+      "```javascript\nsetTimeout(() => run(), 0);\n```",
+      "```javascript\nrequestAnimationFrame(() => run());\n```",
+      "```javascript\nsetInterval(() => run(), 0);\n```",
+    ],
+    0,
+    "Promise callbacks are microtasks; timers and rAF are not.",
+    "code",
+  ),
+  makeQuiz(
+    "usestate",
+    "q-code-snippet-functional-update",
+    "Select the best state update when next value depends on previous value.",
+    [
+      "```javascript\nsetCount((prev) => prev + 1);\n```",
+      "```javascript\nsetCount(count++);\n```",
+      "```javascript\ncount = count + 1;\n```",
+      "```javascript\nsetCount(count + 1); setCount(count + 1);\n```",
+    ],
+    0,
+    "Functional updates avoid stale reads when updates are batched.",
+    "code",
+  ),
+  makeQuiz(
+    "useeffect",
+    "q-code-snippet-effect-cleanup",
+    "Which snippet correctly cleans up an interval in an effect?",
+    [
+      "```javascript\nuseEffect(() => {\n  const id = setInterval(tick, 1000);\n  return () => clearInterval(id);\n}, []);\n```",
+      "```javascript\nuseEffect(() => {\n  setInterval(tick, 1000);\n}, []);\n```",
+      "```javascript\nuseEffect(() => clearInterval(id), []);\n```",
+      "```javascript\nuseEffect(() => {\n  return setInterval(tick, 1000);\n}, []);\n```",
+    ],
+    0,
+    "Effects should return a cleanup function that clears the created interval.",
+    "code",
+  ),
+  makeQuiz(
+    "react-router",
+    "q-code-snippet-link-router",
+    "In React Router, which snippet performs client-side navigation to /profile?",
+    [
+      "```javascript\n<Link to='/profile'>Profile</Link>\n```",
+      "```javascript\n<a to='/profile'>Profile</a>\n```",
+      "```javascript\n<button href='/profile'>Profile</button>\n```",
+      "```javascript\nnavigate.profile('/profile')\n```",
+    ],
+    0,
+    "Use the router's `Link` component with `to` for SPA navigation.",
+    "code",
+  ),
+  makeQuiz(
+    "memoisation",
+    "q-code-snippet-usememo",
+    "Which snippet memoizes an expensive computed value?",
+    [
+      "```javascript\nconst value = useMemo(() => heavy(items), [items]);\n```",
+      "```javascript\nconst value = useEffect(() => heavy(items), [items]);\n```",
+      "```javascript\nconst value = useRef(() => heavy(items));\n```",
+      "```javascript\nconst value = useCallback(heavy(items), [items]);\n```",
+    ],
+    0,
+    "`useMemo` caches computed values. `useEffect` is for side-effects, and `useCallback` caches functions.",
+    "code",
+  ),
+  makeQuiz(
+    "this-keyword",
+    "q-code-snippet-bind-this",
+    "Choose the snippet that permanently binds `this` to `obj`.",
+    [
+      "```javascript\nconst g = f.bind(obj);\n```",
+      "```javascript\nconst g = f.call(obj);\n```",
+      "```javascript\nconst g = f.apply(obj, []);\n```",
+      "```javascript\nconst g = () => f(obj);\n```",
+    ],
+    0,
+    "`bind` returns a new function with `this` fixed to the provided object.",
+    "code",
   ),
 ];
 
@@ -2006,6 +2158,7 @@ export const QUIZ_QUESTIONS: SeedQuizQuestion[] = [
   },
   ...EASY_QUIZ_ADDITIONS,
   ...MEDIUM_QUIZ_ADDITIONS,
+  ...CODE_SNIPPET_QUIZ_ADDITIONS,
   ...JS_FUNDAMENTALS_QUIZ_ADDITIONS,
   ...JS_TOPIC_QUIZ_ADDITIONS,
 ];

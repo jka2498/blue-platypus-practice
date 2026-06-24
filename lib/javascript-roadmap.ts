@@ -782,15 +782,18 @@ export function generateFallbackMcqs(topicName: string): QuizQuestion[] {
     {
       id: `gen-mcq-1-${topicName}`,
       topic_id: null,
+      slug: null,
       question: `Which statement best describes why ${topicName} matters in day-to-day JavaScript work?`,
       options: FALLBACK_MCQ_OPTIONS,
       correct_index: 0,
+      question_kind: "text",
       explanation:
         "This topic usually improves both code clarity and bug prevention, which has direct impact in real projects.",
     },
     {
       id: `gen-mcq-2-${topicName}`,
       topic_id: null,
+      slug: null,
       question: `When practicing ${topicName}, which approach helps most?`,
       options: [
         "Memorize syntax only",
@@ -799,12 +802,14 @@ export function generateFallbackMcqs(topicName: string): QuizQuestion[] {
         "Rely on framework defaults",
       ],
       correct_index: 1,
+      question_kind: "text",
       explanation:
         "Small, targeted examples build transferable understanding much faster than memorization.",
     },
     {
       id: `gen-mcq-3-${topicName}`,
       topic_id: null,
+      slug: null,
       question: `A strong signal that you understand ${topicName} is:`,
       options: [
         "You can predict behavior before running code",
@@ -813,6 +818,7 @@ export function generateFallbackMcqs(topicName: string): QuizQuestion[] {
         "You only know one happy-path example",
       ],
       correct_index: 0,
+      question_kind: "text",
       explanation:
         "Prediction and explanation of outcomes shows conceptual understanding.",
     },

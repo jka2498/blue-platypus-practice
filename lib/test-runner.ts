@@ -100,13 +100,26 @@ export async function runJsChallenge(
   for (const tc of testCases) {
     try {
       // Support async solutions transparently.
-      const raw = fn(...tc.input);
+      let raw: unknown;
+      try {
+        raw = fn(...tc.input);
+      } catch (err) {
+        // Some seed challenges intentionally model constructor-style solutions.
+        // Retry once with `new` before treating the failure as fatal.
+        raw = Reflect.construct(fn as unknown as new (...args: never[]) => unknown, tc.input);
+      }
       const received = raw instanceof Promise ? await raw : raw;
-      const passed = deepEqual(received, tc.expected_output);
+      const expected = tc.expected_output;
+      const probe = typeof expected === "function" ? await expected(received) : undefined;
+      const passed =
+        typeof expected === "function"
+          ? Boolean(probe)
+          : deepEqual(received, expected);
       results.push({
         description: tc.description,
         passed,
-        expected: formatValue(tc.expected_output),
+        expected:
+          typeof expected === "function" ? formatValue(probe) : formatValue(expected),
         received: formatValue(received),
       });
     } catch (err) {
