@@ -3,7 +3,11 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { ChapterLearningPath } from "@/components/javascript-roadmap/chapter-learning-path";
 import { getSessionUser } from "@/lib/session";
-import { getChallengeDetail, getChallengeList, getJavascriptRoadmapChapterBySlug } from "@/lib/queries";
+import {
+  getChallengeDetail,
+  getChallengeList,
+  getJavascriptRoadmapChapterBySlug,
+} from "@/lib/queries";
 
 export default async function JavascriptRoadmapChapterPage({
   params,
@@ -23,12 +27,16 @@ export default async function JavascriptRoadmapChapterPage({
   const challengeItems =
     params.slug === "array-methods"
       ? allTopicChallenges
-          .filter((item) => item.challenge.slug.startsWith("array-method-fundamentals-"))
+          .filter((item) =>
+            item.challenge.slug.startsWith("array-method-fundamentals-"),
+          )
           .sort((a, b) => a.challenge.slug.localeCompare(b.challenge.slug))
       : allTopicChallenges;
 
   const activeChallengeItem =
-    challengeItems.find((item) => item.status !== "passed") ?? challengeItems[0] ?? null;
+    challengeItems.find((item) => item.status !== "passed") ??
+    challengeItems[0] ??
+    null;
 
   const challengeDetail = activeChallengeItem
     ? await getChallengeDetail(activeChallengeItem.challenge.slug, user.id)
@@ -66,6 +74,7 @@ export default async function JavascriptRoadmapChapterPage({
       </div>
 
       <ChapterLearningPath
+        chapterSlug={chapter.topic.slug}
         title={chapter.topic.name}
         summary={chapter.summary}
         mcqs={chapter.mcqs}

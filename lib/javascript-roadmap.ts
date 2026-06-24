@@ -64,7 +64,8 @@ export function getRoadmapPhaseMeta(slug: string) {
   return {
     phaseId: "interview-readiness" as const,
     phaseTitle: "Phase 3 - Interview Readiness",
-    phaseDescription: "Data structures, algorithmic thinking, and deeper reasoning.",
+    phaseDescription:
+      "Data structures, algorithmic thinking, and deeper reasoning.",
     phaseOrder: JS_ROADMAP_PHASES.length,
     stepInPhase: 999,
     sequenceOrder: 9999,
@@ -232,28 +233,170 @@ When you access \`obj.key\`, JavaScript checks:
 - Swallowing errors in broad \`catch\` blocks.
 - Over-chaining then/catch while also using async/await.`,
 
-  "array-methods": `Array methods let you express intent clearly: transform, filter, aggregate, search, and check conditions.
+  "array-methods": `Array methods let you write expressive, predictable code. This chapter follows MDN guidance: choose methods by intent, and always know whether a method mutates or returns a copy.
 
-### Core method families
-- Transform: \`map\`
-- Filter/select: \`filter\`
-- Aggregate: \`reduce\`
-- Query: \`find\`, \`some\`, \`every\`
-- Ordering: \`sort\` (mutates)
+### Quick rules (from MDN patterns)
+- Copying methods return a new array (shallow copy).
+- Mutating methods change the original array.
+- Iterative methods use callbacks with \`(element, index, array)\`.
 
-### Mutation awareness
-- \`map\`, \`filter\`, \`slice\` return new arrays.
-- \`push\`, \`splice\`, \`sort\`, \`reverse\` mutate in place.
+### Transform and iterate
+- \`forEach\`: run side effects for each item (returns \`undefined\`).
+\`\`\`js
+const items = ["a", "b", "c"];
+items.forEach((item, i) => console.log(i, item));
+\`\`\`
 
-### Practical habits
-- Pick the method that matches your intention.
-- Keep callbacks pure when possible.
-- Prefer readability over clever chaining.
+- \`map\`: transform every item into a new array.
+\`\`\`js
+const nums = [1, 2, 3];
+const doubled = nums.map((n) => n * 2); // [2, 4, 6]
+\`\`\`
+
+- \`flatMap\`: map each item, then flatten one level.
+\`\`\`js
+const words = ["hi", "ok"];
+const chars = words.flatMap((w) => w.split("")); // ["h", "i", "o", "k"]
+\`\`\`
+
+- \`flat\`: flatten nested arrays to a depth.
+\`\`\`js
+const nested = [1, [2, [3]]];
+const oneLevel = nested.flat(); // [1, 2, [3]]
+const deep = nested.flat(2); // [1, 2, 3]
+\`\`\`
+
+### Filter and search
+- \`filter\`: keep items matching a condition.
+\`\`\`js
+const nums = [1, 2, 3, 4];
+const even = nums.filter((n) => n % 2 === 0); // [2, 4]
+\`\`\`
+
+- \`find\`: first item matching a condition.
+\`\`\`js
+const users = [{ id: 1 }, { id: 2 }];
+const match = users.find((u) => u.id === 2); // { id: 2 }
+\`\`\`
+
+- \`findIndex\`: index of first match, or \`-1\`.
+\`\`\`js
+const nums = [10, 20, 30];
+const idx = nums.findIndex((n) => n > 15); // 1
+\`\`\`
+
+- \`some\`: true if at least one item matches.
+\`\`\`js
+const nums = [1, 3, 5, 8];
+const hasEven = nums.some((n) => n % 2 === 0); // true
+\`\`\`
+
+- \`every\`: true only if all items match.
+\`\`\`js
+const nums = [2, 4, 6];
+const allEven = nums.every((n) => n % 2 === 0); // true
+\`\`\`
+
+- \`includes\`: membership check by value.
+\`\`\`js
+const tags = ["js", "react"];
+const hasReact = tags.includes("react"); // true
+\`\`\`
+
+- \`indexOf\`: first index of value, or \`-1\`.
+\`\`\`js
+const tags = ["js", "ts", "js"];
+const firstJs = tags.indexOf("js"); // 0
+\`\`\`
+
+### Aggregate
+- \`reduce\`: combine items into one value.
+\`\`\`js
+const nums = [1, 2, 3, 4];
+const sum = nums.reduce((acc, n) => acc + n, 0); // 10
+\`\`\`
+
+### Access and read helpers
+- \`at\`: read by index (supports negative indices).
+\`\`\`js
+const letters = ["a", "b", "c"];
+letters.at(-1); // "c"
+\`\`\`
+
+- \`join\`: turn array into a string.
+\`\`\`js
+const words = ["learn", "js"];
+const line = words.join(" "); // "learn js"
+\`\`\`
+
+### Copying and slicing
+- \`slice\`: copy a section (non-mutating).
+\`\`\`js
+const nums = [10, 20, 30, 40];
+const middle = nums.slice(1, 3); // [20, 30]
+\`\`\`
+
+- \`concat\`: merge arrays/values (non-mutating).
+\`\`\`js
+const a = [1, 2];
+const b = [3, 4];
+const merged = a.concat(b, 5); // [1, 2, 3, 4, 5]
+\`\`\`
+
+### Mutating methods (change original array)
+- \`push\`: append items, returns new length.
+\`\`\`js
+const arr = [1, 2];
+arr.push(3); // arr => [1, 2, 3]
+\`\`\`
+
+- \`pop\`: remove last item, returns removed item.
+\`\`\`js
+const arr = [1, 2, 3];
+const last = arr.pop(); // last = 3, arr => [1, 2]
+\`\`\`
+
+- \`shift\`: remove first item.
+\`\`\`js
+const arr = [1, 2, 3];
+const first = arr.shift(); // first = 1, arr => [2, 3]
+\`\`\`
+
+- \`unshift\`: add items to start, returns new length.
+\`\`\`js
+const arr = [2, 3];
+arr.unshift(0, 1); // arr => [0, 1, 2, 3]
+\`\`\`
+
+- \`splice\`: add/remove/replace items at an index.
+\`\`\`js
+const arr = ["a", "b", "c", "d"];
+const removed = arr.splice(1, 2, "x", "y");
+// removed => ["b", "c"], arr => ["a", "x", "y", "d"]
+\`\`\`
+
+- \`sort\`: sorts in place (string compare by default).
+\`\`\`js
+const nums = [10, 2, 30];
+nums.sort((a, b) => a - b); // [2, 10, 30]
+\`\`\`
+
+- \`reverse\`: reverse in place.
+\`\`\`js
+const arr = [1, 2, 3];
+arr.reverse(); // [3, 2, 1]
+\`\`\`
+
+### Non-mutating modern alternatives
+- \`toSorted\`, \`toReversed\`, \`toSpliced\`, and \`with\` return new arrays instead of mutating.
 
 ### Common pitfalls
-- Using \`map\` when not using the returned array.
-- Forgetting \`sort\` compares strings by default.
-- Writing complex \`reduce\` logic where a loop is clearer.`,
+- Using \`map\` for side effects (use \`forEach\` instead).
+- Forgetting \`sort\` without comparator is lexicographic.
+- Mutating while iterating can create confusing behavior.
+
+Reference: MDN Array docs
+https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array`,
 
   destructuring: `Destructuring pulls values out of arrays/objects into local bindings with concise syntax.
 
@@ -619,7 +762,7 @@ export function getTopicLesson(slug: string, topicName: string): string {
 ### How to practice
 - Predict outcomes before running code.
 - Validate with tiny examples.
-- Explain your reasoning in plain language.`
+- Explain your reasoning in plain language.`;
   const workedExample =
     JS_TOPIC_WORKED_EXAMPLES[slug] ??
     `### Worked Example
@@ -639,15 +782,18 @@ export function generateFallbackMcqs(topicName: string): QuizQuestion[] {
     {
       id: `gen-mcq-1-${topicName}`,
       topic_id: null,
+      slug: null,
       question: `Which statement best describes why ${topicName} matters in day-to-day JavaScript work?`,
       options: FALLBACK_MCQ_OPTIONS,
       correct_index: 0,
+      question_kind: "text",
       explanation:
         "This topic usually improves both code clarity and bug prevention, which has direct impact in real projects.",
     },
     {
       id: `gen-mcq-2-${topicName}`,
       topic_id: null,
+      slug: null,
       question: `When practicing ${topicName}, which approach helps most?`,
       options: [
         "Memorize syntax only",
@@ -656,12 +802,14 @@ export function generateFallbackMcqs(topicName: string): QuizQuestion[] {
         "Rely on framework defaults",
       ],
       correct_index: 1,
+      question_kind: "text",
       explanation:
         "Small, targeted examples build transferable understanding much faster than memorization.",
     },
     {
       id: `gen-mcq-3-${topicName}`,
       topic_id: null,
+      slug: null,
       question: `A strong signal that you understand ${topicName} is:`,
       options: [
         "You can predict behavior before running code",
@@ -670,6 +818,7 @@ export function generateFallbackMcqs(topicName: string): QuizQuestion[] {
         "You only know one happy-path example",
       ],
       correct_index: 0,
+      question_kind: "text",
       explanation:
         "Prediction and explanation of outcomes shows conceptual understanding.",
     },
@@ -684,7 +833,10 @@ const PRACTICE_TEMPLATES = [
   "Create a tiny interview-style challenge that combines {topic} with another JS fundamental and solve it.",
 ];
 
-export function generatePracticeChallenges(topicSlug: string, topicName: string): RoadmapPracticeChallenge[] {
+export function generatePracticeChallenges(
+  topicSlug: string,
+  topicName: string,
+): RoadmapPracticeChallenge[] {
   return PRACTICE_TEMPLATES.map((template, index) => ({
     id: `generated-${topicSlug}-${index + 1}`,
     title: `${topicName} Practice ${index + 1}`,

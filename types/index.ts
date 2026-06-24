@@ -55,9 +55,11 @@ export interface FlashcardProgress {
 export interface QuizQuestion {
   id: string;
   topic_id: string | null;
+  slug: string | null;
   question: string;
   options: string[];
   correct_index: number;
+  question_kind: "text" | "code";
   explanation: string | null;
 }
 

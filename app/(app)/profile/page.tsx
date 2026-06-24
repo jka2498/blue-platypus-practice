@@ -4,7 +4,13 @@ import { getSessionUser } from "@/lib/session";
 import { getLevelInfo } from "@/lib/levels";
 import { getActivityFeed } from "@/lib/queries";
 import { Progress } from "@/components/ui/progress";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 export const metadata = { title: "Profile" };
@@ -42,21 +48,34 @@ export default async function ProfilePage() {
           <div className="flex items-center gap-6">
             {/* Level donut */}
             <div className="relative h-20 w-20">
-              <svg className="h-full w-full" viewBox="0 0 32 32" fill="none">
-                <circle cx="16" cy="16" r="14" stroke="currentColor" strokeWidth="2" className="text-border" />
+              <svg
+                className="h-full w-full -rotate-90"
+                viewBox="0 0 32 32"
+                fill="none"
+              >
                 <circle
                   cx="16"
                   cy="16"
                   r="14"
                   stroke="currentColor"
                   strokeWidth="2"
-                  strokeDasharray={`${Math.min(level.level * 2.8, 87.96)} 87.96`}
+                  className="text-border"
+                />
+                <circle
+                  cx="16"
+                  cy="16"
+                  r="14"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeDasharray={`${level.progress * 87.96} 87.96`}
                   className="text-accent transition-all"
                   strokeLinecap="round"
                 />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-lg font-bold text-foreground">{level.level}</span>
+                <span className="text-lg font-bold text-foreground">
+                  {level.level}
+                </span>
                 <span className="text-xs text-muted-foreground">lvl</span>
               </div>
             </div>
@@ -65,7 +84,9 @@ export default async function ProfilePage() {
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm">
                 <Zap className="h-4 w-4 text-accent" />
-                <span className="font-semibold">{level.totalXp.toLocaleString()}</span>
+                <span className="font-semibold">
+                  {level.totalXp.toLocaleString()}
+                </span>
                 <span className="text-muted-foreground">XP</span>
               </div>
               <div className="flex items-center gap-2 text-sm">
@@ -80,7 +101,9 @@ export default async function ProfilePage() {
         {/* Progress to next level */}
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm">
-            <span className="font-medium">Progress to Level {level.level + 1}</span>
+            <span className="font-medium">
+              Progress to Level {level.level + 1}
+            </span>
             <span className="text-muted-foreground">
               {level.xpIntoLevel} / {level.xpForLevel} XP
             </span>
@@ -100,8 +123,12 @@ export default async function ProfilePage() {
             <Zap className="h-4 w-4 text-accent" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{level.totalXp.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground mt-1">across all challenges</p>
+            <div className="text-2xl font-bold">
+              {level.totalXp.toLocaleString()}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              across all challenges
+            </p>
           </CardContent>
         </Card>
 
@@ -112,18 +139,24 @@ export default async function ProfilePage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{user.streak_days}</div>
-            <p className="text-xs text-muted-foreground mt-1">consecutive days active</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              consecutive days active
+            </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Level Progress</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Level Progress
+            </CardTitle>
             <TrendingUp className="h-4 w-4 text-accent" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{progressPercent}%</div>
-            <p className="text-xs text-muted-foreground mt-1">to level {level.level + 1}</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              to level {level.level + 1}
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -132,7 +165,9 @@ export default async function ProfilePage() {
       <Card>
         <CardHeader>
           <CardTitle>Recent Activity</CardTitle>
-          <CardDescription>Your latest completions and progress</CardDescription>
+          <CardDescription>
+            Your latest completions and progress
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {activity.length > 0 ? (
@@ -149,15 +184,27 @@ export default async function ProfilePage() {
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-muted-foreground">{item.detail}</span>
-                    {item.passed === true && <span className="text-xs font-semibold text-success">✓ Passed</span>}
-                    {item.passed === false && <span className="text-xs font-semibold text-error">✗ Failed</span>}
+                    <span className="text-xs text-muted-foreground">
+                      {item.detail}
+                    </span>
+                    {item.passed === true && (
+                      <span className="text-xs font-semibold text-success">
+                        ✓ Passed
+                      </span>
+                    )}
+                    {item.passed === false && (
+                      <span className="text-xs font-semibold text-error">
+                        ✗ Failed
+                      </span>
+                    )}
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">No activity yet. Start learning!</p>
+            <p className="text-sm text-muted-foreground">
+              No activity yet. Start learning!
+            </p>
           )}
         </CardContent>
       </Card>

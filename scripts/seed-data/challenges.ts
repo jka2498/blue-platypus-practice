@@ -1276,8 +1276,16 @@ const JS_TOPIC_CHALLENGES: SeedChallenge[] = [
     annotatedSolution:
       "function makeGreeter(name) {\n  return {\n    name,\n    greet() {\n      // Arrow function captures `this` from the enclosing method — no binding needed.\n      const inner = () => `Hello from ${this.name}`;\n      return inner();\n    },\n  };\n}\n",
     testCases: [
-      { input: ["Kai"], expected_output: "Hello from Kai", description: "arrow captures outer this" },
-      { input: ["Ava"], expected_output: "Hello from Ava", description: "works with another name" },
+      {
+        input: ["Kai"],
+        expected_output: (greeter: { greet: () => string }) => greeter.greet() === "Hello from Kai",
+        description: "arrow captures outer this",
+      },
+      {
+        input: ["Ava"],
+        expected_output: (greeter: { greet: () => string }) => greeter.greet() === "Hello from Ava",
+        description: "works with another name",
+      },
     ],
     hints: [
       "Arrow functions do not have their own `this` — they inherit it.",
@@ -1301,7 +1309,11 @@ const JS_TOPIC_CHALLENGES: SeedChallenge[] = [
     annotatedSolution:
       "function createBoundLogger(prefix) {\n  const obj = { prefix, log(msg) { return `[${this.prefix}] ${msg}`; } };\n  // bind() permanently ties `this` to `obj`, regardless of call site.\n  return obj.log.bind(obj);\n}\n",
     testCases: [
-      { input: ["INFO"], expected_output: (fn: (m: string) => string) => fn("server started"), description: "returns bound function that prepends prefix" },
+      {
+        input: ["INFO"],
+        expected_output: (log: (m: string) => string) => log("server started") === "[INFO] server started",
+        description: "returns bound function that prepends prefix",
+      },
     ],
     hints: [
       "Create an object with a `log` method that reads `this.prefix`.",
@@ -1726,11 +1738,11 @@ const JS_TOPIC_CHALLENGES: SeedChallenge[] = [
     testCases: [
       {
         input: [0],
-        expected_output: (Counter: new (n: number) => { increment: () => void; value: () => number }) => {
-          const c = new Counter(0);
+        expected_output: (counter: { increment: () => void; value: () => number }) => {
+          const c = counter;
           c.increment();
           c.increment();
-          return c.value();
+          return c.value() === 2;
         },
         description: "increment and value work after two increments",
       },
@@ -1759,8 +1771,8 @@ const JS_TOPIC_CHALLENGES: SeedChallenge[] = [
     testCases: [
       {
         input: [],
-        expected_output: (makeStack: () => { push: (x: number) => void; pop: () => number; size: () => number }) => {
-          const s = makeStack();
+        expected_output: (stack: { push: (x: number) => void; pop: () => number; size: () => number }) => {
+          const s = stack;
           s.push(1); s.push(2);
           const popped = s.pop();
           return s.size() === 1 && popped === 2;
@@ -1793,8 +1805,8 @@ const JS_TOPIC_CHALLENGES: SeedChallenge[] = [
     testCases: [
       {
         input: [],
-        expected_output: (makeQ: () => { enqueue: (x: number) => void; dequeue: () => number | undefined; size: () => number }) => {
-          const q = makeQ();
+        expected_output: (queue: { enqueue: (x: number) => void; dequeue: () => number | undefined; size: () => number }) => {
+          const q = queue;
           q.enqueue(1); q.enqueue(2);
           return q.dequeue() === 1 && q.size() === 1;
         },
@@ -1825,8 +1837,8 @@ const JS_TOPIC_CHALLENGES: SeedChallenge[] = [
     testCases: [
       {
         input: [],
-        expected_output: (makeS: () => { push: (x: number) => void; pop: () => number | undefined; peek: () => number | undefined; isEmpty: () => boolean }) => {
-          const s = makeS();
+        expected_output: (stack: { push: (x: number) => void; pop: () => number | undefined; peek: () => number | undefined; isEmpty: () => boolean }) => {
+          const s = stack;
           s.push(1); s.push(2);
           return s.peek() === 2 && s.pop() === 2 && !s.isEmpty();
         },
@@ -1857,8 +1869,8 @@ const JS_TOPIC_CHALLENGES: SeedChallenge[] = [
     testCases: [
       {
         input: [["a", "b", "a", "c", "b", "a"]],
-        expected_output: (buildMap: (arr: string[]) => Map<string, number>) => {
-          const m = buildMap(["a", "b", "a", "c", "b", "a"]);
+        expected_output: (map: Map<string, number>) => {
+          const m = map;
           return m.get("a") === 3 && m.get("b") === 2 && m.get("c") === 1;
         },
         description: "counts each element correctly",
@@ -2154,8 +2166,8 @@ const JS_TOPIC_CHALLENGES: SeedChallenge[] = [
     testCases: [
       {
         input: [],
-        expected_output: (make: () => { naive: (a: number[]) => boolean; optimal: (a: number[]) => boolean }) => {
-          const { naive, optimal } = make();
+        expected_output: (api: { naive: (a: number[]) => boolean; optimal: (a: number[]) => boolean }) => {
+          const { naive, optimal } = api;
           return naive([1, 2, 2]) && optimal([1, 2, 2]) && !naive([1, 2, 3]) && !optimal([1, 2, 3]);
         },
         description: "both approaches agree on duplicates and no-duplicates cases",

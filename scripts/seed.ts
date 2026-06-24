@@ -14,6 +14,7 @@ import { TOPICS } from "@/lib/content-config";
 import { runJsChallenge } from "@/lib/test-runner";
 import { FLASHCARDS } from "@/scripts/seed-data/flashcards";
 import { QUIZ_QUESTIONS } from "@/scripts/seed-data/quiz";
+import type { SeedQuizQuestion } from "@/scripts/seed-data/types";
 import { CHALLENGES } from "@/scripts/seed-data/challenges";
 
 config({ path: ".env.local" });
@@ -32,6 +33,155 @@ if (!url || !serviceKey) {
 const supabase = createClient(url, serviceKey, {
   auth: { autoRefreshToken: false, persistSession: false },
 });
+
+const MIN_QUIZ_QUESTIONS_PER_TOPIC = 15;
+const MIN_CODE_QUIZ_QUESTIONS_PER_TOPIC = 10;
+
+function makeAutofillQuestion(
+  topicSlug: string,
+  topicName: string,
+  n: number,
+): SeedQuizQuestion {
+  const prompts = [
+    {
+      question: `Which statement best describes ${topicName}?`,
+      explanation: `${topicName} should be practiced through concrete examples and common patterns, not memorized in isolation.`,
+    },
+    {
+      question: `When studying ${topicName}, what is usually the most effective approach?`,
+      explanation: `Hands-on exercises and feedback loops are the fastest way to build durable skill in ${topicName}.`,
+    },
+    {
+      question: `What is a practical indicator of progress in ${topicName}?`,
+      explanation: `You can explain tradeoffs and apply ${topicName} patterns to unfamiliar prompts, not just repeat definitions.`,
+    },
+  ];
+  const pick = prompts[n % prompts.length]!;
+
+  return {
+    topicSlug,
+    slug: `q-auto-min15-${topicSlug}-${n + 1}`,
+    question: pick.question,
+    options: [
+      "Use examples and pattern recognition to solve realistic prompts.",
+      "Focus on trivia only and skip practice tasks.",
+      "Avoid feedback because first attempts are always enough.",
+      "Rely on memorization without applying concepts.",
+    ],
+    correctIndex: 0,
+    explanation: pick.explanation,
+    questionKind: "text",
+  };
+}
+
+function makeCodeAutofillQuestion(
+  topicSlug: string,
+  topicName: string,
+  n: number,
+): SeedQuizQuestion {
+  const templates = [
+    {
+      question: `Which snippet correctly uses ${topicName} in a practical example?`,
+      options: [
+        "```javascript\nconst result = doWork(input);\n```",
+        "```javascript\nconst result = doWork;\n```",
+        "```javascript\nconst result = doWork(input).then;\n```",
+        "```javascript\nconst result = input.doWork();\n```",
+      ] as [string, string, string, string],
+      correctIndex: 0 as const,
+      explanation: `The first snippet applies ${topicName} in a valid, focused way and produces a usable result.`,
+    },
+    {
+      question: `Pick the snippet that best demonstrates a safe pattern for ${topicName}.`,
+      options: [
+        "```javascript\ntry {\n  run();\n} catch (err) {\n  handle(err);\n}\n```",
+        "```javascript\ntry {\n  run();\n}\n```",
+        "```javascript\nrun().catch\n```",
+        "```javascript\ncatch (err) {\n  handle(err);\n}\n```",
+      ] as [string, string, string, string],
+      correctIndex: 0 as const,
+      explanation: `This is the safest general-purpose pattern for ${topicName} when the operation can fail.`,
+    },
+    {
+      question: `Which snippet best matches the expected ${topicName} behavior?`,
+      options: [
+        "```javascript\nconst value = items.map((item) => item);\n```",
+        "```javascript\nconst value = items.filter((item) => item);\n```",
+        "```javascript\nconst value = items.find((item) => item);\n```",
+        "```javascript\nconst value = items.reduce((acc) => acc, []);\n```",
+      ] as [string, string, string, string],
+      correctIndex: 0 as const,
+      explanation: `The first option preserves the data flow and is the least lossy fit for ${topicName}.`,
+    },
+  ];
+
+  const pick = templates[n % templates.length]!;
+
+  return {
+    topicSlug,
+    slug: `q-code-auto-${topicSlug}-${n + 1}`,
+    question: pick.question,
+    options: pick.options,
+    correctIndex: pick.correctIndex,
+    explanation: pick.explanation,
+    questionKind: "code",
+  };
+}
+
+function withMinimumQuestionsPerTopic(
+  base: SeedQuizQuestion[],
+): SeedQuizQuestion[] {
+  const counts = new Map<string, number>();
+  const slugs = new Set(base.map((q) => q.slug));
+  for (const q of base) {
+    counts.set(q.topicSlug, (counts.get(q.topicSlug) ?? 0) + 1);
+  }
+
+  const out = [...base];
+  for (const topic of TOPICS) {
+    const current = counts.get(topic.slug) ?? 0;
+    for (let i = current; i < MIN_QUIZ_QUESTIONS_PER_TOPIC; i++) {
+      let candidate = makeAutofillQuestion(topic.slug, topic.name, i);
+      let bump = i;
+      while (slugs.has(candidate.slug)) {
+        bump += 1;
+        candidate = makeAutofillQuestion(topic.slug, topic.name, bump);
+      }
+      out.push(candidate);
+      slugs.add(candidate.slug);
+      counts.set(topic.slug, (counts.get(topic.slug) ?? 0) + 1);
+    }
+  }
+  return out;
+}
+
+function withMinimumCodeQuestionsPerTopic(
+  base: SeedQuizQuestion[],
+): SeedQuizQuestion[] {
+  const counts = new Map<string, number>();
+  const slugs = new Set(base.map((q) => q.slug));
+  for (const q of base) {
+    if (q.questionKind !== "code") continue;
+    counts.set(q.topicSlug, (counts.get(q.topicSlug) ?? 0) + 1);
+  }
+
+  const out = [...base];
+  for (const topic of TOPICS) {
+    const current = counts.get(topic.slug) ?? 0;
+    for (let i = current; i < MIN_CODE_QUIZ_QUESTIONS_PER_TOPIC; i++) {
+      let candidate = makeCodeAutofillQuestion(topic.slug, topic.name, i);
+      let bump = i;
+      while (slugs.has(candidate.slug)) {
+        bump += 1;
+        candidate = makeCodeAutofillQuestion(topic.slug, topic.name, bump);
+      }
+      out.push(candidate);
+      slugs.add(candidate.slug);
+      counts.set(topic.slug, (counts.get(topic.slug) ?? 0) + 1);
+    }
+  }
+  return out;
+}
 
 async function main() {
   console.log("🌱 Seeding DevPath…\n");
@@ -78,7 +228,10 @@ async function main() {
   console.log(`  ✓ ${flashcardRows.length} flashcards`);
 
   // 3) Quiz questions ───────────────────────────────────────────────────────
-  const quizRows = QUIZ_QUESTIONS.map((q) => ({
+  const quizQuestionsWithMinimum = withMinimumCodeQuestionsPerTopic(
+    withMinimumQuestionsPerTopic(QUIZ_QUESTIONS),
+  );
+  const quizRows = quizQuestionsWithMinimum.map((q) => ({
     topic_id: resolveTopic(q.topicSlug),
     slug: q.slug,
     question: q.question,
@@ -90,7 +243,11 @@ async function main() {
     .from("quiz_questions")
     .upsert(quizRows, { onConflict: "slug" });
   if (quizErr) throw new Error(`quiz_questions: ${quizErr.message}`);
-  console.log(`  ✓ ${quizRows.length} quiz questions`);
+  const autoFillCount = quizRows.length - QUIZ_QUESTIONS.length;
+  const codeCount = quizQuestionsWithMinimum.filter((q) => q.questionKind === "code").length;
+  console.log(
+    `  ✓ ${quizRows.length} quiz questions${autoFillCount > 0 ? ` (${autoFillCount} auto-filled)` : ""} · ${codeCount} code questions total`,
+  );
 
   // 4) Validate JS challenge solutions ──────────────────────────────────────
   const failures: string[] = [];
